@@ -1,0 +1,140 @@
+@import "./them";
+page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.tb-bar {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 10;
+  height: 2.2rem;
+  background-color: #f7f7f8;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.tb-bar-tab {
+  bottom: 0;
+  z-index: 900;
+  width: 100%;
+  height: 3rem;
+  padding: 0;
+  table-layout: fixed;
+  border-top: 1px solid #e7e7e7;
+  border-bottom: 0;
+  border-left: 0;
+  -webkit-transition-duration: 400ms;
+  -o-transition-duration: 400ms;
+  transition-duration: 400ms;
+  .tb-tab-item {
+    position: relative;
+    display: table-cell;
+    width: 1%;
+    height: 3rem;
+    color: #929292;
+    text-align: center;
+    vertical-align: middle;
+    .tb-tab-icon {
+      top: .15rem;
+      width: 1.4rem;
+      height: 1.4rem;
+      padding-top: 0;
+      padding-bottom: 0;
+      font-size: 1.4rem;
+      line-height: 1.2rem;
+    }
+    .tb-tab-icon ~ .tb-tab-label {
+      position: relative;
+      display: block;
+      font-size: .65rem;
+    }
+    &.active {
+      color: @primaryColor;
+    }
+  }
+}
+
+.tb-content {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tb-has-bottom-tab {
+  bottom: 3rem;
+}
+
+.tb-card {
+  position: relative;
+  margin: .5rem;
+  font-size: .7rem;
+  background: #fff;
+  border-radius: .1rem;
+  box-shadow: 0 0.05rem 0.1rem rgba(0, 0, 0, .3);
+  .tb-card-header {
+    font-size: .85rem;
+    border-bottom: 1px solid #e1e1e1;
+    border-radius: .1rem .1rem 0 0;
+  }
+  .tb-card-content {
+    position: relative;
+  }
+  .tb-card-footer {
+    color: #5f646e;
+    border-top: 1px solid #e1e1e1;
+    border-radius: 0 0 .1rem .1rem;
+  }
+  .tb-card-header, .tb-card-footer {
+    position: relative;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    min-height: 2.2rem;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    padding: .5rem .75rem;
+    -webkit-box-pack: justify;
+    -ms-flex-pack: justify;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+  }
+}
+
+.tb-flex-item {
+  flex: 1 1 auto;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.content-nowrap {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

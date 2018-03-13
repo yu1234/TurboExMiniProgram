@@ -1,0 +1,311 @@
+<template>
+  <view class="tb-content tb-has-bottom-tab">
+    <view class="tb-card" wx:if="{{cards.ml.count>0}}">
+      <view class="tb-card-content">
+        <wxc-flex>
+          <view class="tb-flex-item tb-card-left">
+            <icon class="iconfont {{cards.ml.icon}}"></icon>
+          </view>
+          <view class="tb-flex-item tb-card-right">
+            <wxc-flex dir="top" main="center" wrap="nowrap">
+              <view class="tb-flex-item" style="padding: .15rem 0 .15rem .5rem">
+                <wxc-flex>
+                  <view class="tb-flex-item" style="flex-grow: 8;font-size: 1rem;">
+                    {{cards.ml.title}}
+                    <wxc-badge max="99" value="{{cards.ml.count}}" badge-class="tb-badge"></wxc-badge>
+                  </view>
+                  <view class="tb-flex-item" style="font-size: 0.75rem;color: rgb(153, 153, 153);padding-top: .4rem">
+                    {{cards.ml.date}}
+                  </view>
+                </wxc-flex>
+              </view>
+              <view class="tb-flex-item"
+                    style="padding: 0rem 0 .15rem .5rem;width: 95%;font-size: .85rem">
+                <wxc-elip>{{cards.ml.content}}</wxc-elip>
+              </view>
+            </wxc-flex>
+          </view>
+        </wxc-flex>
+      </view>
+    </view>
+  </view>
+  <view class="tb-bar tb-bar-tab">
+    <a class="tb-tab-item {{bottomTabActive===1?'active':''}}" @tap="tabChange('message')">
+      <icon class="iconfont icon-tab_icon_home_defaul tb-tab-icon"></icon>
+      <view class="tb-tab-label">提醒</view>
+    </a>
+    <a class="tb-tab-item {{bottomTabActive===2?'active':''}}" @tap="tabChange('fn')">
+      <icon class="iconfont icon-tab_icon_refresh_def tb-tab-icon"></icon>
+      <view class="tb-tab-label">功能</view>
+    </a>
+    <a class="tb-tab-item {{bottomTabActive===3?'active':''}}" @tap="tabChange('address')">
+      <icon class="iconfont icon-tab_icon_address_boo tb-tab-icon"></icon>
+      <view class="tb-tab-label">地址本</view>
+    </a>
+    <a class="tb-tab-item {{bottomTabActive===4?'active':''}}" @tap="tabChange('me')">
+      <icon class="iconfont icon-tab_icon_my_default tb-tab-icon"></icon>
+      <view class="tb-tab-label">我</view>
+    </a>
+  </view>
+  <wxc-popup id="fnPopup" animation-mode="bottom" align="bottom">
+    <view class="fn-popup-content">
+      <wxc-flex main="center" cross="center">
+        <view class="tb-flex-item">
+      <icon class="iconfont icon-function_icon_mail_d" size="60"></icon>
+          <!--<icon type="success" size="60"/>-->
+        </view>
+        <view class="tb-flex-item">
+        </view>
+        <view class="tb-flex-item">
+        </view>
+        <view class="tb-flex-item">
+        </view>
+      </wxc-flex>
+    </view>
+  </wxc-popup>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import {twCallBeanPromise, twFormatGetFileCallBeanUri} from '../../utils/twmodule'
+  import {defaultErrors, parseDate} from '../../utils/utils'
+
+  export default class Login extends wepy.page {
+    config = {
+      navigationBarTitleText: '首页',
+      enablePullDownRefresh: true,
+      usingComponents: {
+        'wxc-flex': '../../components/@minui/wxc-flex/dist/index',
+        'wxc-badge': '../../components/@minui/wxc-badge/dist/index',
+        'wxc-popup': '../../components/@minui/wxc-popup/dist/index',
+        'wxc-elip': '../../components/@minui/wxc-elip/dist/index'
+      }
+    }
+    components = {}
+    data = {
+      bottomTabActive: 1,
+      userInfo: {},
+      cards: {
+        ml: {
+          icon: '', // 图标样式
+          title: '', // 标题
+          count: 0, // 数量
+          date: '', // 时间
+          content: '' // 内容
+        }
+      }
+    }
+    computed = {}
+    methods = {
+
+      tabChange(id) {
+        if (id === 'message') {
+          this.bottomTabActive = 1
+        } else if (id === 'fn') {
+          this.bottomTabActive = 2
+          this.showPopup('fnPopup')
+        } else if (id === 'address') {
+          this.bottomTabActive = 3
+          wepy.navigateTo({
+            url: '/pages/address/address'
+          })
+        } else if (id === 'me') {
+          this.bottomTabActive = 4
+        }
+      }
+    }
+    events = {}
+
+    onLoad() {
+      this.getUserMsg()
+    }
+
+    onShow() {
+      this.bottomTabActive = 1
+      this.getMlNotice()
+    }
+
+    /**
+     * 显示弹出层
+     */
+    showPopup(id) {
+      let popupComponent = this.$wxpage.selectComponent(`#${id}`)
+      popupComponent && popupComponent.show()
+    }
+
+    /**
+     * 下拉刷新函数
+     */
+    onPullDownRefresh() {
+      console.log('onPullDownRefresh')
+      wepy.showNavigationBarLoading() // 在标题栏中显示加载
+      this.getMlNotice().then(() => {
+        wepy.hideNavigationBarLoading() // 完成停止加载
+        wepy.stopPullDownRefresh() // 停止下拉刷新
+      })
+    }
+
+    /**
+     * 获取邮件提醒
+     */
+    getMlNotice() {
+      let self = this
+      return new Promise(function (resolve) {
+        self.getNoticeList().then((data) => {
+          let ml = {
+            icon: 'icon-function_icon_mail_d icon',
+            title: '新邮件',
+            count: 0,
+            date: null,
+            content: null
+          }
+          self.getNoticeTypeCount().then(function (countObj) {
+            if (countObj['ml']) {
+              ml.count = countObj['ml']
+              for (let i = 0, len = data.length; i < len; i++) {
+                let notice = data[i]
+                if (notice && notice.rels && notice.rels.length > 0) {
+                  let type = notice.rels[0].idtype
+                  // 邮件通知
+                  if (type === 'ml') {
+                    if (!ml.content) {
+                      ml.content = notice.content
+                      ml.date = parseDate(notice.createtime)
+                    }
+                  }
+                }
+              }
+              if (ml.count > 0) {
+                self.cards.ml = ml
+                self.$apply()
+              }
+            }
+            resolve()
+          }).catch(function (e) {
+            wepy.showToast({title: e.message, icon: 'none'})
+            resolve()
+          })
+        }).catch((e) => {
+          wepy.showToast({title: e.message, icon: 'none'})
+          resolve()
+        })
+      })
+    }
+
+    /**
+     *  获取用户信息
+     */
+    getUserMsg() {
+      let self = this
+      twCallBeanPromise('du.useraccount.getuitem', {}).then(function (ret) {
+        if (ret.beanparam.data) {
+          if (ret.beanparam.data.name) {
+            self.userInfo.name = ret.beanparam.data.name
+            self.userInfo.accounts = ret.beanparam.data.accounts
+            self.userInfo.uid = ret.beanparam.data.id
+          }
+        }
+        // 查询用户空间使用情况
+        return twCallBeanPromise('mail.counter.size.user.get', {'uid': self.userInfo.uid})
+      }).then(function (ret) {
+        if (ret.beanparam.data) {
+          var usesize = ret.beanparam.data.size
+          self.userInfo.useSize = (usesize / 1024 / 1024).toFixed(0)
+        }
+        // 查询用户空间配额
+        return twCallBeanPromise('quota.user.max_mailbox_size.get', {'id': self.userInfo.uid})
+      }).then(function (ret) {
+        if (ret.beanparam.data) {
+          var quota = ret.beanparam.data.quota
+          self.userInfo.quota = quota || 0
+        }
+        return twCallBeanPromise('config.user.head.get', {})
+      }).then(function (ret) {
+        var beanparam = ret.beanparam
+        if (!beanparam.data.id) {
+          // 如果用户没有设置头像
+          return
+        }
+        var src = twFormatGetFileCallBeanUri('config.user.head.get', {'isattach': false})
+        self.userInfo.headPhoto = src
+        self.$parent.globalData.userInfo = self.userInfo
+      })
+    }
+
+    /**
+     * 获取通知列表
+     */
+    getNoticeList() {
+      return new Promise(function (resolve, reject) {
+        twCallBeanPromise('notice.getlist', {}).then(function (ret) {
+          if (ret.beanparam.data) {
+            let data = ret.beanparam.data
+            if (data.list && data.list.length > 0) {
+              resolve(data.list)
+            } else {
+              reject(defaultErrors.dataEmptyError)
+            }
+          } else {
+            reject(defaultErrors.serverError)
+          }
+        }).catch(function (e) {
+          reject(defaultErrors.networkError)
+        })
+      })
+    }
+
+    /**
+     * 获取各个类型的数量
+     */
+    getNoticeTypeCount() {
+      return new Promise(function (resolve, reject) {
+        twCallBeanPromise('notice.getdatatypecount', {}).then(function (ret) {
+          if (ret.beanparam.data) {
+            resolve(ret.beanparam.data)
+          } else {
+            reject(defaultErrors.serverError)
+          }
+        }).catch(function (e) {
+          reject(defaultErrors.networkError)
+        })
+      })
+    }
+  }
+</script>
+
+<style lang="less">
+  @import "../../styles/them";
+
+  .tb-card {
+    border-radius: 0.4rem;
+    .tb-card-left {
+      border-bottom-left-radius: 0.4rem;
+      border-top-left-radius: 0.4rem;
+      min-height: 4rem;
+      min-width: 4rem;
+      flex-grow: 1;
+      background: @primaryColor;
+      text-align: center;
+      .icon {
+        margin-top: .75rem;
+        color: white;
+        font-size: 2.5rem;
+      }
+    }
+    .tb-card-right {
+      min-height: 4rem;
+      flex-grow: 8;
+      width: 70%;
+      .tb-badge {
+        background-color: @primaryColor;
+      }
+
+    }
+  }
+
+  .fn-popup-content {
+    width: 100%;
+    height: auto;
+    background: #ffffff;
+  }
+</style>

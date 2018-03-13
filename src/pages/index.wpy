@@ -1,0 +1,68 @@
+<style lang="less">
+</style>
+<template>
+  <view class="flex-wrp" style="flex-direction:column;">
+    <view class="flex-item">
+      <button type="primary" @tap="scanCode()" size="mini">扫码</button>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+
+  export default class Index extends wepy.page {
+    config = {
+      navigationBarTitleText: 'TurboEx'
+    }
+    components = {}
+
+    mixins = []
+
+    data = {
+      userInfo: {
+        nickName: '加载中...'
+      }
+    }
+
+    computed = {}
+
+    methods = {
+      scanCode() {
+        console.log('scanCode')
+        wepy.navigateTo({
+          url: '/pages/login/login'
+        })
+        /* wepy.scanCode({
+           success: function (res) {
+             console.log('scanCode success', res)
+             if (res && res.result) {
+               try {
+                 let result = JSON.parse(res.result)
+                 if (result.address) {
+                   wepy.navigateTo({
+                     url: '/pages/login/login'
+                   })
+                 }
+               } catch (e) {
+                 console.log(e)
+               }
+             }
+           },
+           fail: function () {
+             console.log('scanCode fail')
+           },
+           complete: function () {
+             console.log('scanCode complete')
+           }
+         }) */
+      }
+    }
+
+    events = {}
+
+    onLoad() {
+
+    }
+  }
+</script>

@@ -1,0 +1,58 @@
+<style lang="less">
+  @import "styles/iconfont/iconfont";
+  @import "styles/base";
+</style>
+
+<script>
+  import wepy from 'wepy'
+  import 'wepy-async-function'
+
+  import {setStore} from 'wepy-redux'
+  import configStore from './store'
+
+  const store = configStore()
+  setStore(store)
+
+  export default class extends wepy.app {
+    config = {
+      pages: [
+        'pages/index',
+        'pages/login/login',
+        'pages/main/main',
+        'pages/address/address'
+      ],
+      window: {
+        backgroundTextStyle: 'light',
+        navigationBarBackgroundColor: '#f7f7f8',
+        navigationBarTitleText: 'WeChat',
+        navigationBarTextStyle: 'black'
+      }
+    }
+
+    globalData = {
+      userInfo: null,
+      weUserInfo: null
+    }
+
+    constructor() {
+      super()
+      this.use('requestfix')
+    }
+
+    onLaunch() {
+    }
+
+    getWeUserInfo(cb) {
+      const that = this
+      if (this.globalData.userInfo) {
+        return this.globalData.weUserInfo
+      }
+      wepy.getUserInfo({
+        success(res) {
+          that.globalData.weUserInfo = res.userInfo
+          cb && cb(res.userInfo)
+        }
+      })
+    }
+  }
+</script>

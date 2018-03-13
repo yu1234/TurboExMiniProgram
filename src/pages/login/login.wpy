@@ -1,0 +1,306 @@
+<template>
+
+  <view class="text-center" style="margin-top:15%">
+    <view class="box text-center">
+      <view class="head">
+        <wxc-flex main="center" cross="center">
+          <view>
+            <wxc-avatar class="avatar" image-class="head-photo-shadow"
+                        src="{{logo}}"></wxc-avatar>
+          </view>
+        </wxc-flex>
+      </view>
+      <view class="content">
+        <view class="list">
+          <wxc-flex dir="top">
+            <view>
+              <view class="textField">
+                <input type="text" value="{{login.user}}" bindinput="bindFromData('user')"/>
+                <icon class="iconfont icon-user"/>
+              </view>
+            </view>
+            <view>
+              <view class="textField">
+                <input type="password" value="{{login.password}}" bindinput="bindFromData('password')"/>
+                <icon class="iconfont icon-password"/>
+              </view>
+            </view>
+            <view>
+              <checkbox-group bindchange="bindFromData('checkbox')">
+                <wxc-flex>
+                  <view class="tb-checkbox" style="padding-left: 1rem">
+                    <checkbox value="remUser" color="#49A9F2" checked="{{login.remUser}}"/>
+                    记住账号
+                  </view>
+                  <view class="tb-checkbox text-right" style="padding-right: 2rem">
+                    <checkbox value="remPassword" color="#49A9F2" checked="{{login.remPassword}}"/>
+                    记住密码
+                  </view>
+                </wxc-flex>
+              </checkbox-group>
+            </view>
+            <view>
+              <view class="login-btn">
+                <button loading="{{loading}}" @tap="login">登陆</button>
+              </view>
+            </view>
+          </wxc-flex>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import {debug, service, storageKeys, setSessionId, setWid} from '../../config'
+  import {twCallBeanPromise} from '../../utils/twmodule'
+  export default class Login extends wepy.page {
+    config = {
+      usingComponents: {
+        'wxc-flex': '../../components/@minui/wxc-flex/dist/index',
+        'wxc-avatar': '../../components/@minui/wxc-avatar/dist/index'
+      },
+      navigationBarBackgroundColor: '#49A9F2',
+      navigationBarTextStyle: 'white',
+      navigationBarTitleText: '登陆'
+    };
+    components = {}
+
+    data = {
+      logo: `${service.host}/img/m/login/login_img_profile_photo.png`,
+      loading: false,
+      key: null,
+      loginUrl: `${service.host}/login`,
+      login: {
+        user: '',
+        password: '',
+        remPassword: false,
+        remUser: false
+
+      }
+    };
+    methods = {
+      /**
+       * 表单数据绑定
+       * @param type
+       * @param event
+       */
+      bindFromData(type, event) {
+        if (type === 'user') {
+          this.login.user = event.detail.value
+        } else if (type === 'password') {
+          this.login.password = event.detail.value
+        } else if (type === 'checkbox') {
+          let checkeds = event.detail.value
+          if (checkeds && checkeds.length > 0) {
+            let oldRemPassword = this.login.remPassword
+            let oldRemUser = this.login.remUser
+            if (checkeds.includes('remPassword')) {
+              this.login.remPassword = true
+            } else {
+              this.login.remPassword = false
+            }
+            if (checkeds.includes('remUser')) {
+              this.login.remUser = true
+            } else {
+              this.login.remUser = false
+            }
+            if (!oldRemPassword && this.login.remPassword && !this.login.remUser) {
+              this.login.remUser = true
+            }
+            if (oldRemUser && !this.login.remUser && this.login.remPassword) {
+              this.login.remPassword = false
+            }
+          } else {
+            this.login.remPassword = false
+            this.login.remUser = false
+          }
+        }
+      },
+      /**
+       * login事件
+       */
+      login() {
+        // 校验输入账号和密码
+        if (!this.login.user || this.login.user.trim().length <= 0) {
+          wepy.showToast({title: '用户名不能为空', icon: 'none'})
+          return
+        }
+        if (!debug && (!this.login.password || this.login.password.trim().length <= 0)) {
+          wepy.showToast({title: '密码不能为空', icon: 'none'})
+          return
+        }
+        this.loading = true
+        twCallBeanPromise('mp.login', {
+          useraccount: this.login.user,
+          password: this.login.password
+        }, {}, () => {
+          this.loading = false
+          this.$apply()
+        }).then((ret) => {
+          if (ret.beanparam.data.sessionid) {
+            setSessionId(ret.beanparam.data.sessionid)
+            setWid(ret.beanparam.data.wid)
+            // 保存密码和账号
+            if (this.login.remUser) {
+              let data = {
+                date: new Date(),
+                data: this.login.user
+              }
+              wepy.setStorageSync(storageKeys.user, data)
+            } else {
+              wepy.removeStorage({key: storageKeys.user})
+            }
+            if (this.login.remPassword) {
+              let data = {
+                date: new Date(),
+                data: this.login.password
+              }
+              wepy.setStorageSync(storageKeys.password, data)
+            } else {
+              wepy.removeStorage({key: storageKeys.password})
+            }
+            wepy.navigateTo({
+              url: '/pages/main/main'
+            })
+          } else {
+            wepy.showToast({title: '账号名或密码错误', icon: 'none'})
+          }
+        }).catch(() => {
+          wepy.showToast({title: '账号名或密码错误', icon: 'none'})
+        })
+      }
+    }
+
+    events = {};
+
+    onLoad() {
+    }
+
+    onShow() {
+      this.initLoginInfo()
+    }
+
+    /**
+     * 初始化登陆账号信息
+     */
+    initLoginInfo() {
+      let _this = this
+      wepy.getStorage({
+        key: storageKeys.user,
+        success: function (data) {
+          if (data.data) {
+            let userSaveData = data.data
+            let saveDateUseful = userSaveData.date ? (new Date().getTime() - new Date(userSaveData.date).getTime()) < (7 * 24 * 60 * 60 * 1000) : false
+            if (saveDateUseful) {
+              _this.login.remUser = true
+              _this.login.user = userSaveData.data
+              wepy.getStorage({
+                key: storageKeys.password,
+                success: function (data1) {
+                  if (data1.data) {
+                    let passwordSaveData = data1.data
+                    let pSaveDateUseful = passwordSaveData.date ? (new Date().getTime() - new Date(passwordSaveData.date).getTime()) < (7 * 24 * 60 * 60 * 1000) : false
+                    if (pSaveDateUseful) {
+                      _this.login.remPassword = true
+                      _this.login.password = passwordSaveData.data
+                    } else {
+                      wepy.removeStorage({key: storageKeys.password})
+                    }
+                  }
+                }
+              })
+            } else {
+              wepy.removeStorage({
+                key: storageKeys.user,
+                success() {
+                  wepy.removeStorage({key: storageKeys.password})
+                }
+              })
+            }
+          }
+        }
+      })
+    }
+  }
+</script>
+
+<style lang="less">
+  @import "../../styles/them";
+
+  page {
+    height: 100%;
+    background-color: @primaryColor;
+  }
+
+  .box {
+    display: inline-block;
+    min-height: 15rem;
+    width: 85%;
+    .head {
+      position: absolute;
+      z-index: 1;
+      width: 85%;
+
+      .avatar {
+        display: block;
+        width: 6.5rem;
+        height: 6.5rem;
+      }
+      .head-photo-shadow {
+        box-shadow: 0 3px 10px rgba(73, 169, 242, .156863), 0 3px 10px rgba(73, 169, 242, .227451);
+      }
+    }
+    .content {
+      position: relative;
+      top: 3.5rem;
+      z-index: 0;
+      display: inline-block;
+      min-height: 10rem;
+      width: 100%;
+      background-color: white;
+      border-radius: .8rem;
+      .list {
+        margin-top: 3rem;
+        text-align: center;
+        .textField {
+          margin: 1rem 1.5rem 0 1.5rem;
+          height: 2rem;
+          input {
+            height: 100%;
+            border-radius: 1rem;
+            border: 1px solid #ccc;
+          }
+          .icon-user {
+            position: absolute;
+            top: 4rem;
+            left: 2rem;
+            font-size: 1.2rem;
+            color: #ccc;
+          }
+          .icon-password {
+            position: absolute;
+            top: 7.2rem;
+            left: 2rem;
+            font-size: 1.2rem;
+            color: #ccc;
+          }
+        }
+        .tb-checkbox {
+          flex: 1 1 auto;
+          margin-top: 1rem;
+        }
+        .login-btn {
+          margin: 1rem 1.5rem 1.5rem 1.5rem;
+          height: 2rem;
+          button {
+            background-color: @primaryColor;
+            border-radius: 1rem;
+            color: white;
+          }
+        }
+      }
+    }
+  }
+</style>

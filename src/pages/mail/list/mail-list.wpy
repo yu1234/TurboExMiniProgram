@@ -1,0 +1,34 @@
+<template>
+
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import {twCallBeanPromise, twFormatGetFileCallBeanUri} from '../../../utils/twmodule'
+  import {defaultErrors, parseDate} from '../../../utils/utils'
+
+  export default class MailList extends wepy.page {
+    config = {
+      navigationBarTitleText: '邮件列表',
+      usingComponents: {
+        'wxc-flex': '../../components/@minui/wxc-flex/dist/index',
+        'wxc-badge': '../../components/@minui/wxc-badge/dist/index',
+        'wxc-popup': '../../components/@minui/wxc-popup/dist/index'
+      }
+    }
+    components = {}
+    data = {}
+    computed = {}
+    methods = {}
+
+    onShow() {
+    }
+
+    onLoad() {
+    }
+  }
+</script>
+
+<style scoped>
+
+</style>
