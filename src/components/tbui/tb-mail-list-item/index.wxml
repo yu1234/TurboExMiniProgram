@@ -1,0 +1,9 @@
+<view class="tb-mail-list-item" style="{{top?' background-color: rgb(255, 253, 217);':''}}">
+  <tb-list-item avatar="{{avatar}}" title="{{title}}" title-after="{{titleAfter}}"
+                sub-title="{{subTitle}}" text="{{text}}" has-strip="{{unRead}}" title-bold="{{unRead}}"
+                has-right-slot="{{hasRight}}" bind:error="error">
+    <view slot="right">
+      <slot name="right"></slot>
+    </view>
+  </tb-list-item>
+</view>

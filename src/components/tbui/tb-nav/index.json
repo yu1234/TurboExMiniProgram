@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "wxc-elip": "../../minui/wxc-elip/index"
+  }
+}

@@ -1,23 +1,29 @@
 <style lang="less">
 </style>
 <template>
-  <view class="flex-wrp" style="flex-direction:column;">
+  <view class="tb-content" style="flex-direction:column;">
     <view class="flex-item">
       <button type="primary" @tap="scanCode()" size="mini">扫码</button>
+    </view>
+    <view class="flex-item">
+      <button type="primary" @tap="debugTap()" size="mini">调试</button>
     </view>
   </view>
 </template>
 
 <script>
   import wepy from 'wepy'
+  import BaseMixin from '../mixins/base'
 
   export default class Index extends wepy.page {
     config = {
-      navigationBarTitleText: 'TurboEx'
+      navigationBarTitleText: 'TurboEx',
+      usingComponents: {
+      }
     }
     components = {}
 
-    mixins = []
+    mixins = [BaseMixin]
 
     data = {
       userInfo: {
@@ -56,6 +62,9 @@
              console.log('scanCode complete')
            }
          }) */
+      },
+      debugTap() {
+        this.loadPage('/pages/debug/debug')
       }
     }
 

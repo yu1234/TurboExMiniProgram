@@ -1,0 +1,12 @@
+<view class="avatar">
+
+    <block wx:if="{{src}}">
+      <image class="avatar__pic avatar__mold--{{mold}} image-class" src="{{src}}" binderror="error" bindload="load"></image>
+    </block>
+
+    <wxc-cc _pid="{{_pid}}">
+        <slot></slot>
+    </wxc-cc>
+
+    <wxc-badge class="avatar__badge" wx:if="{{count}}" _pid="{{_pid}}">{{count}}</wxc-badge>
+</view>

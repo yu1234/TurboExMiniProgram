@@ -1,0 +1,39 @@
+<view class="tb-item-wrapper" style="user-select: none; outline: none; cursor: pointer; -webkit-appearance: none;">
+  <view
+    class="tb-item {{hasLeft||avatar?'show-left':''}} {{hasRight?'show-right':''}} {{!hasLeft&&avatar?'has-avatar':''}}">
+    <view class="blue-strip" wx:if="{{hasStrip}}"></view>
+    <view class="tb-item-left" wx:if="{{hasLeft||avatar}}">
+      <wxc-avatar class="tb-avatar" src="{{avatar}}" wx:if="{{!hasLeft&&avatar}}" bind:error="error">
+      </wxc-avatar>
+      <slot name="left" wx:if="{{hasLeft&&!avatar}}"></slot>
+    </view>
+    <view class="tb-item-content">
+      <view class="tb-item-title-row">
+        <view class="tb-item-title {{titleAfter||hasTitleAfterSlot?'tb-item-has-after':''}} {{titleBold?'font-bold':''}}">
+          <wxc-elip wx:if="{{title}}">{{title}}</wxc-elip>
+        </view>
+        <view class="tb-item-after" wx:if="{{titleAfter||hasTitleAfterSlot}}">
+          <wxc-elip wx:if="{{titleAfter}}">{{titleAfter}}</wxc-elip>
+          <slot name="titleAfter" wx:if="{{hasTitleAfterSlot}}">
+          </slot>
+        </view>
+      </view>
+      <view class="tb-item-title-row" wx:if="{{subTitle}}">
+        <view class="tb-item-sub-title {{subTitleAfter||hasSubTitleAfterSlot?'tb-item-has-after':''}} {{titleBold?'font-bold':''}}">
+          <wxc-elip wx:if="{{subTitle}}">{{subTitle}}</wxc-elip>
+        </view>
+        <view class="tb-item-after" wx:if="{{subTitleAfter||hasSubTitleAfterSlot}}">
+          <wxc-elip wx:if="{{subTitleAfter}}">{{subTitleAfter}}</wxc-elip>
+          <slot name="subTitleAfter" wx:if="{{hasSubTitleAfterSlot}}"></slot>
+        </view>
+      </view>
+      <div class="tb-item-text">
+        <slot name="text" wx:if="{{!text}}"></slot>
+        <wxc-elip wx:if="{{text}}">{{text}}</wxc-elip>
+      </div>
+    </view>
+    <view class="tb-item-right" wx:if="{{hasRight}}">
+      <slot name="right"></slot>
+    </view>
+  </view>
+</view>

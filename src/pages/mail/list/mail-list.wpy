@@ -1,34 +1,397 @@
 <template>
+  <tb-nav has-right>
+    <view slot="right">
+      <icon class="iconfont icon-nav_btn_mail_menu tb-nav-icon" @tap="openSwipePanel('')"></icon>
+    </view>
+  </tb-nav>
+  <view class="tb-content has-sub-header" bindlongpress="longTap">
+    <tb-mail-list-item avatar="{{item.headerPhoto}}" title="{{item.title}}" subTitle="{{item.subject}}"
+                       text="{{item.text}}" titleAfter="{{item.date}}" un-read="{{item.unRead}}" top="{{item.top}}"
+                       has-right="{{config.edit}}"
+                       wx:for="{{mails}}"
+                       wx:key="{{item.id}}">
+      <checkbox slot="right" color="#49A9F2"/>
+    </tb-mail-list-item>
+    <tb-loading-more loading wx:if="{{!noMoreDate}}"></tb-loading-more>
+  </view>
+  <!--侧边栏-->
+  <tb-popup position="right" open="{{swipePanelOpen}}" bind:show="swipePanelChange" bind:hide="swipePanelChange"  @tap="changeTab">
+    <view class="swipe-panel-right">
+      <wxc-flex dir="top" main="center">
+        <view wx:for="{{sysDefaultFolders}}" wx:key="{{item.id}}"
+              class="tb-flex-item item {{config.currentTab===item.id?'active':''}}">
+          <wxc-flex cross="center">
+            <view class="tb-flex-item" style="width: 20%">
+              <icon class="iconfont {{item.icon}} icon"></icon>
+            </view>
+            <view class="tb-flex-item" style="flex-grow: 4;width: {{item.hasChildNodes?'60%':'80%'}};">
+              <wxc-elip class="folder-name">{{item.name}}</wxc-elip>
+            </view>
+            <view class="tb-flex-item" style="width: 20%" wx:if="{{item.hasChildNodes}}">
+              <icon class="iconfont icon-next-m icon"></icon>
+            </view>
+          </wxc-flex>
+        </view>
+      </wxc-flex>
+
+    </view>
+  </tb-popup>
+  <!-- <view class="tb-bar tb-bar-tab">
+     <view class="tb-tab-item">
+       <icon class="iconfont icon-move_mail_icon_recyc tb-tab-icon"></icon>
+     </view>
+     <view class="tb-tab-item">
+       <icon class="iconfont icon-move_mail_icon_recyc tb-tab-icon"></icon>
+     </view>
+   </view>-->
 
 </template>
 
 <script>
   import wepy from 'wepy'
   import {twCallBeanPromise, twFormatGetFileCallBeanUri} from '../../../utils/twmodule'
-  import {defaultErrors, parseDate} from '../../../utils/utils'
+  import {parseDate} from '../../../utils/utils'
+  import {service} from '../../../config'
+  import BaseMixin from '../../../mixins/base'
+  import PullDownRefreshMixin from '../../../mixins/pullDownRefresh'
+  import LoadMoreMixin from '../../../mixins/loadMore'
+  import MailFolderMixin from '../../../mixins/mailFolder'
 
   export default class MailList extends wepy.page {
+    mixins = [BaseMixin, PullDownRefreshMixin, LoadMoreMixin, MailFolderMixin]
     config = {
       navigationBarTitleText: '邮件列表',
       usingComponents: {
-        'wxc-flex': '../../components/@minui/wxc-flex/dist/index',
-        'wxc-badge': '../../components/@minui/wxc-badge/dist/index',
-        'wxc-popup': '../../components/@minui/wxc-popup/dist/index'
-      }
+        'wxc-flex': '../../../components/minui/wxc-flex/index',
+        'wxc-elip': '../../../components/minui/wxc-elip/index',
+        'tb-mail-list-item': '../../../components/tbui/tb-mail-list-item/index',
+        'tb-nav': '../../../components/tbui/tb-nav/index',
+        'tb-popup': '../../../components/tbui/tb-popup/index',
+        'tb-loading-more': '../../../components/tbui/tb-load-more/index'
+      },
+      enablePullDownRefresh: true,
+      backgroundTextStyle: `dark`
     }
     components = {}
-    data = {}
+    data = {
+      swipePanelOpen: false,
+      defaultHeaderPhoto: `${service.host}/img/av1.png`,
+      mails: [],
+      config: {
+        edit: false,
+        currentTab: 'inbox',
+        pagesize: 15,
+        fromindex: 0
+      },
+      flags: ['star', 'importance', 'backlog']
+    }
     computed = {}
-    methods = {}
+    methods = {
+      longTap() {
+        console.log('longTap')
+      },
+      openSwipePanel() {
+        this.swipePanelOpen = true
+      },
+      swipePanelChange(e) {
+        if (e.type === 'show') {
+          this.swipePanelOpen = true
+        } else if (e.type === 'hide') {
+          this.swipePanelOpen = false
+        }
+      },
+      changeTab(tab) {
+        debugger
+        if (tab) {
+          return
+        }
+        if (tab === 'custom') {
+
+        } else {
+          self.config.currentTab = tab
+          this.refresh()
+        }
+      }
+    }
+
+    filter() {
+      let self = this
+      return {
+        topMailFilter(mails) {
+          let n = []
+          self.each(mails, function (value, index) {
+            if (value && !value.top) {
+              n.push(value)
+            }
+          })
+          return n
+        }
+      }
+    }
 
     onShow() {
+
     }
 
     onLoad() {
+      let self = this
+      wepy.showLoading({title: '正在加载数据...'})
+      self.config.currentTab = 'inbox'
+      self.refresh().then(function () {
+        wepy.hideLoading()
+      })
+    }
+
+    onShareAppMessage() {
+
+    }
+
+    /**
+     * 刷新
+     */
+    refresh() {
+      let self = this
+      return new Promise(function (resolve) {
+        self.config.fromindex = 0
+        // 获取收件箱邮件
+        if (self.config.currentTab === 'inbox') {
+          self.getTopMails().then((topMail) => {
+            self.getMailsByFolder(self.config.currentTab, self.config.fromindex).then((inboxMail) => {
+              let newInboxMail = self.filter().topMailFilter(inboxMail)
+              self.refreshComplete(topMail, newInboxMail)
+              resolve()
+            })
+          })
+        } else if (self.flags.includes(self.config.currentTab)) {
+
+        } else {
+          self.getMailsByFolder(self.config.currentTab, self.config.fromindex).then((folderMail) => {
+            self.refreshComplete(folderMail)
+            resolve()
+          })
+        }
+      })
+    }
+
+    refreshComplete(mails1, mails2) {
+      let self = this
+      self.mails = self.concat([], mails1, mails2)
+      if (self.mails.length < self.config.pagesize) {
+        self._loadMoreComplete(true)
+      }
+      self._refreshComplete()
+      self.$apply()
+    }
+
+    /**
+     * 加载更多
+     */
+
+    loadMore() {
+      let self = this
+      self.config.fromindex = self.config.fromindex + self.config.pagesize
+      if (self.config.currentTab === 'inbox') {
+        self.getMailsByFolder(self.config.currentTab, self.config.fromindex).then((inboxMail) => {
+          let newInboxMail = self.filter().topMailFilter(inboxMail)
+          self.loadMoreComplete(newInboxMail)
+        })
+      }
+    }
+
+    loadMoreComplete(mails) {
+      let self = this
+      self.mails = self.concat(self.mails || [], mails)
+      let noMoreDate = false
+      if (self.mails.length < self.config.fromindex) {
+        noMoreDate = true
+      }
+      self._loadMoreComplete(noMoreDate)
+      self.$apply()
+    }
+
+    /**
+     * 根据文件夹获取邮件
+     * @param folder 文件夹编码
+     * @param fromindex 定位号
+     */
+    getMailsByFolder(folder, fromindex) {
+      let self = this
+      return new Promise(function (resolve) {
+        let params = {
+          foldercode: folder || '',
+          pagesize: self.config.pagesize,
+          fromindex: fromindex || 0,
+          flag: -1 // 加载所有邮件
+        }
+        twCallBeanPromise('mail.client.getlist_foldercode', params).then(function (ret) {
+          let mails = (ret.beanparam.data && ret.beanparam.data.mails) || []
+          let mls = self.formatMails(mails)
+          resolve(mls)
+        }).catch((e) => {
+          resolve([])
+        })
+      })
+    }
+
+    /**
+     * 根据标示获取邮件
+     * @param folder 文件夹编码
+     * @param fromindex 定位号
+     */
+    getMailsByFlag(flag, fromindex, pagesize) {
+      let self = this
+      return new Promise(function (resolve) {
+        let params = {
+          flag: flag || -1,
+          fromindex: fromindex || 0,
+          pagesize: pagesize || self.config.pagesize
+        }
+        twCallBeanPromise('mail.client.getlist_flag', params).then(function (ret) {
+          let mails = (ret.beanparam.data && ret.beanparam.data.mails) || []
+          let mls = self.formatMails(mails)
+          resolve(mls)
+        }).catch((e) => {
+          resolve([])
+        })
+      })
+    }
+
+    /**
+     *根据flag获取邮件列表，获取全部
+     */
+    getMailListByFlagTotal(flag) {
+      let self = this
+      return new Promise(function (resolve) {
+        let params = {
+          flag: flag || -1
+        }
+        // 获取指定邮件总数量
+        twCallBeanPromise('mail.client.getcount_flag', params).then(function (ret) {
+          let count = ret.beanparam.data.count || 0
+          self.getMailsByFlag(flag, 0, count).then((data) => {
+            resolve(data)
+          })
+        })
+      })
+    }
+
+    /**
+     *获取置顶邮件
+     */
+    getTopMails() {
+      return new Promise((resolve) => {
+        this.getMailListByFlagTotal(10).then((topMail) => {
+          resolve(topMail)
+        })
+      })
+    }
+
+    /**
+     * 邮件对象数据格式化
+     * @param mails
+     * @returns {Array}
+     */
+    formatMails(mails) {
+      let mls = []
+      if (this.isArrayNotNull(mails)) {
+        for (let i = 0, len = mails.length; i < len; i++) {
+          let mail = mails[i]
+          if (mail.mailid) {
+            let from = mail.from || {}
+            let flags = mail.flags
+            let unRead = false
+            let hasAttach = false
+            let star = false
+            let importance = false
+            let backlog = false
+            let top = false
+            if (this.isArrayNotNull(flags)) {
+              for (let i = 0, len = flags.length; i < len; i++) {
+                let flag = flags[i]
+                if (flag === '0') {
+                  unRead = true
+                }
+                if (flag === '12') {
+                  hasAttach = true
+                }
+                if (flag === '9') {
+                  star = true
+                }
+                if (flag === '15') {
+                  importance = true
+                }
+                if (flag === '11') {
+                  backlog = true
+                }
+                if (flag === '10') {
+                  top = true
+                }
+              }
+            }
+            let ml = {
+              id: mail.mailid,
+              address: from.account || '',
+              title: from.name || (from.account || '暂无'),
+              subject: mail.subject,
+              fromId: mail.fromid,
+              text: mail.txtcontent || '',
+              date: parseDate(mail.rcpttime),
+              headerPhoto: twFormatGetFileCallBeanUri('config.user.head.get', {
+                'isattach': false,
+                id: mail.fromid
+              }),
+              unRead: unRead,
+              hasAttach: hasAttach,
+              star: star,
+              importance: importance,
+              backlog: backlog,
+              top: top
+            }
+            mls.push(ml)
+          }
+        }
+      }
+      return mls
     }
   }
 </script>
 
-<style scoped>
+<style lang="less">
+  .list {
+    .item {
+      .content {
+        padding-left: .5rem;
+        padding-right: .5rem;
+        .left {
 
+        }
+        .right {
+
+        }
+        .avatar {
+          display: block;
+          width: 2.5rem;
+          height: 2.5rem;
+        }
+      }
+    }
+  }
+
+  .swipe-panel-right {
+    width: 10rem;
+    .item {
+      height: 2.5rem;
+      padding: .2rem;
+      .icon {
+        font-size: 1.2rem;
+        display: flex;
+      }
+      &.active {
+        background-color: rgb(238, 238, 238);
+      }
+      .folder-name {
+        font-size: .75rem;
+      }
+    }
+  }
 </style>

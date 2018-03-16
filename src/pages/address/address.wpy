@@ -19,10 +19,10 @@
     config = {
       navigationBarTitleText: '地址本',
       usingComponents: {
-        'wxc-flex': '../../components/@minui/wxc-flex/dist/index',
-        'wxc-tab': '../../components/@minui/wxc-tab/dist/index',
-        'wxc-tab-panel': '../../components/@minui/wxc-tab/dist/panel',
-        'wxc-tab-label': '../../components/@minui/wxc-tab/dist/label'
+        'wxc-flex': '../../components/minui/wxc-flex/index',
+        'wxc-tab': '../../components/minui/wxc-tab/index',
+        'wxc-tab-panel': '../../components/minui/wxc-tab/panel',
+        'wxc-tab-label': '../../components/minui/wxc-tab/label'
       }
     }
     components = {}

@@ -1,0 +1,56 @@
+<template>
+  <tb-nav title="调试页"></tb-nav>
+  <view class="tb-content has-sub-header">
+    <view class="tb-list">
+      <tb-mail-list-item avatar="{{avatar}}" title="邮件列表测试" subTitle="subTitle"
+                         text="text"
+                         titleAfter="2018-01-01" unRead="{{true}}"
+                         wx:for="{{[1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0]}}">
+
+      </tb-mail-list-item>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import {service} from '../../config'
+  import LoadMoreMixin from '../../mixins/loadMore'
+  import PullDownRefreshMixin from '../../mixins/pullDownRefresh'
+  import BaseMixin from '../../mixins/base'
+
+  export default class Address extends wepy.page {
+    mixins = [BaseMixin, PullDownRefreshMixin, LoadMoreMixin]
+    config = {
+      navigationBarTitleText: '调试页',
+      usingComponents: {
+        'tb-mail-list-item': '../../components/tbui/tb-mail-list-item/index',
+        'tb-list-item': '../../components/tbui/tb-list-item/index',
+        'tb-nav': '../../components/tbui/tb-nav/index',
+        'wxc-elip': '../../components/minui/wxc-elip/index'
+      }
+    }
+    components = {}
+    data = {
+      avatar: `${service.host}/img/av1.png`
+    }
+    computed = {}
+    methods = {}
+
+    onShow() {
+      console.log('debugger onLoad', this.navHeight)
+    }
+
+    onLoad() {
+      console.log('debugger onLoad')
+    }
+
+    onReachBottom() {
+      console.log('debugger onReachBottom')
+    }
+  }
+</script>
+
+<style>
+
+</style>

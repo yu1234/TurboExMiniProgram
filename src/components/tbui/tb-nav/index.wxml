@@ -1,0 +1,9 @@
+<view class="tb-bar tb-bar-nav" style="background-color: {{backgroundColor}};color:{{textColor}};">
+  <view class="pull-left" wx:if="{{hasLeft}}">
+    <slot name="left"></slot>
+  </view>
+  <view class="title"><wxc-elip>{{title}}</wxc-elip></view>
+  <view class="pull-right" wx:if="{{hasRight}}">
+    <slot name="right"></slot>
+  </view>
+</view>

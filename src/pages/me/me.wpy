@@ -1,0 +1,30 @@
+<template>
+<view>我</view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import {twCallBeanPromise, twFormatGetFileCallBeanUri} from '../../utils/twmodule'
+  import {defaultErrors, parseDate} from '../../utils/utils'
+
+  export default class Me extends wepy.page {
+    config = {
+      navigationBarTitleText: '我',
+      usingComponents: {
+        'wxc-flex': '../../components/minui/wxc-flex/index'
+      }
+    }
+    components = {}
+    data = {}
+    computed = {}
+    methods = {}
+
+    onShow() {
+    }
+    onLoad() {}
+  }
+</script>
+
+<style scoped>
+
+</style>

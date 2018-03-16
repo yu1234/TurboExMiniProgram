@@ -1,4 +1,5 @@
-import {service, getSessionId, getWid} from '../config.js'
+import {service, getSessionId, getWid} from '../config'
+import {defaultErrors} from './utils'
 import wepy from 'wepy'
 
 let twFormatCallBeanID = function (cmd, param, filetype) {
@@ -70,16 +71,15 @@ let twmodule = {
           if (data) {
             if (data.statusCode === 200) {
               ret.beanparam = data.data || {}
+              ret.beanparam.data = ret.beanparam.data || {}
               ret.statusCode = data.statusCode
               ret.header = data.heade
               resolve(ret)
             } else {
-              let error = new Error('请求数据失败')
-              reject(error)
+              reject(defaultErrors.serverError)
             }
           } else {
-            let error = new Error('请求数据失败')
-            reject(error)
+            reject(defaultErrors.serverError)
           }
         },
         fail: function (errMsg) {
@@ -87,8 +87,7 @@ let twmodule = {
             let error = new Error(errMsg.errMsg)
             reject(error)
           } else {
-            let error = new Error('请求数据失败')
-            reject(error)
+            reject(defaultErrors.networkError)
           }
         },
         complete: function () {

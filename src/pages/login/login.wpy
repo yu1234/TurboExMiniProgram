@@ -55,16 +55,19 @@
   import wepy from 'wepy'
   import {debug, service, storageKeys, setSessionId, setWid} from '../../config'
   import {twCallBeanPromise} from '../../utils/twmodule'
+  import BaseMixin from '../../mixins/base'
+
   export default class Login extends wepy.page {
     config = {
       usingComponents: {
-        'wxc-flex': '../../components/@minui/wxc-flex/dist/index',
-        'wxc-avatar': '../../components/@minui/wxc-avatar/dist/index'
+        'wxc-flex': '../../components/minui/wxc-flex/index',
+        'wxc-avatar': '../../components/minui/wxc-avatar/index'
       },
       navigationBarBackgroundColor: '#49A9F2',
       navigationBarTextStyle: 'white',
       navigationBarTitleText: '登陆'
-    };
+    }
+    mixins = [BaseMixin]
     components = {}
 
     data = {
@@ -148,7 +151,14 @@
                 date: new Date(),
                 data: this.login.user
               }
-              wepy.setStorageSync(storageKeys.user, data)
+              let rUser = wepy.getStorageSync(storageKeys.user)
+              if (!rUser) {
+                wepy.setStorageSync(storageKeys.user, data)
+              } else {
+                if (rUser.data !== this.login.user) {
+                  wepy.setStorageSync(storageKeys.user, data)
+                }
+              }
             } else {
               wepy.removeStorage({key: storageKeys.user})
             }
@@ -161,14 +171,12 @@
             } else {
               wepy.removeStorage({key: storageKeys.password})
             }
-            wepy.navigateTo({
-              url: '/pages/main/main'
-            })
+            this.loadTabPage('/pages/main/main')
           } else {
             wepy.showToast({title: '账号名或密码错误', icon: 'none'})
           }
-        }).catch(() => {
-          wepy.showToast({title: '账号名或密码错误', icon: 'none'})
+        }).catch((e) => {
+          wepy.showToast({title: e.message, icon: 'none'})
         })
       }
     }
@@ -242,7 +250,7 @@
       position: absolute;
       z-index: 1;
       width: 85%;
-
+      top:3rem;
       .avatar {
         display: block;
         width: 6.5rem;

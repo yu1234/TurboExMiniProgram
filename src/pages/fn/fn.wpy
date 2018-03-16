@@ -1,0 +1,79 @@
+<template>
+  <view class="tb-content fn-popup-content">
+    <wxc-flex main="center" cross="center">
+      <view class="tb-flex-item text-center" @tap="fnItemClick('mail')">
+        <view>
+          <wxc-avatar class="avatar">
+            <icon class="iconfont icon-function_icon_mail_d  icon"></icon>
+          </wxc-avatar>
+        </view>
+        <text>邮件</text>
+      </view>
+      <view class="tb-flex-item">
+      </view>
+      <view class="tb-flex-item">
+      </view>
+      <view class="tb-flex-item">
+      </view>
+    </wxc-flex>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import BaseMixin from '../../mixins/base'
+
+  export default class Fn extends wepy.page {
+    config = {
+      usingComponents: {
+        'wxc-flex': '../../components/minui/wxc-flex/index',
+        'wxc-avatar': '../../components/minui/wxc-avatar/index',
+      }
+    }
+    mixins = [BaseMixin]
+    components = {}
+    data = {
+      navigationBarTitleText: '功能'
+    }
+    computed = {}
+    methods = {
+      /**
+       * 功能选项点击事件
+       */
+      fnItemClick(id) {
+        if (id === 'mail') {
+          this.loadPage('/pages/mail/list/mail-list')
+        }
+      }
+    }
+
+    onShow() {
+    }
+
+    onLoad() {
+    }
+  }
+</script>
+
+<style lang="less">
+  @import "../../styles/them";
+
+  .fn-popup-content {
+    width: 100%;
+    height: auto;
+    background: #ffffff;
+    z-index: 1004;
+    padding: .5rem;
+    .avatar {
+      display: inline-block;
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      background: @primaryColor;
+      color: #FFF;
+    }
+    .icon {
+      font-size: 1.5rem;
+    }
+  }
+</style>

@@ -1,0 +1,6 @@
+<view class="tb-popup tb-popup--{{popupPosition}} {{ showPopup ? 'tb-popup--show' : ''}}">
+  <view class="tb-popup__mask" bindtap="togglePopup" wx:if="{{overlay}}"></view>
+  <view class="tb-popup__container ">
+    <slot></slot>
+  </view>
+</view>

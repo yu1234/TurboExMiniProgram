@@ -1,4 +1,5 @@
 @import "./them";
+
 page {
   position: absolute;
   top: 0;
@@ -15,10 +16,33 @@ page {
   right: 0;
   left: 0;
   z-index: 10;
-  height: 2.2rem;
+  height: 2rem;
   background-color: #f7f7f8;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
+}
+
+.tb-bar-nav {
+  top: 0;
+  .title {
+    position: absolute;
+    display: block;
+    width: 100%;
+    padding: 0;
+    margin: 0 -.5rem;
+    font-size: .85rem;
+    font-weight: 500;
+    line-height: 2.2rem;
+    color: #3d4145;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .pull-left {
+    float: left;
+  }
+  .pull-right {
+    float: right;
+  }
 }
 
 .tb-bar-tab {
@@ -63,17 +87,24 @@ page {
 }
 
 .tb-content {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+.has-sub-header {
+  margin-top: 1.8rem;
 }
 
 .tb-has-bottom-tab {
   bottom: 3rem;
+}
+
+.tb-nav-icon {
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.tb-list {
+
 }
 
 .tb-card {

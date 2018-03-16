@@ -1,0 +1,127 @@
+.tb-item-wrapper {
+  display: block;
+  color: inherit;
+  position: relative;
+  outline: none;
+  cursor: pointer;
+  &.hover {
+    background-color: fade(rgba(0, 0, 0, 0.87), 10%);
+  }
+  &.disabled {
+    cursor: default;
+  }
+  .blue-strip {
+    display: flex;
+    height: 100%;
+    width: .25rem;
+    background-color: rgb(73, 169, 242);
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+}
+
+.tb-item {
+  min-height: 2.5rem;
+  display: flex;
+  padding: .5rem .5rem;
+  color: rgba(0, 0, 0, 0.87);
+  position: relative;
+  &.show-left {
+    padding-left: 3.5rem;
+  }
+  &.show-right {
+    padding-right: 3rem;
+  }
+  &.has-avatar {
+    min-height: 2.5rem;
+  }
+  .tb-avatar {
+    display: block;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+.tb-item-left, .tb-item-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 2.5rem;
+  height: 100%;
+  position: absolute;
+  color: #757575;
+  top: 0;
+}
+
+.tb-item-left {
+  left: .5rem;
+}
+
+.tb-item-right {
+  right: 0;
+  justify-content: flex-end;
+}
+
+.tb-item-content {
+  width: 100%;
+  align-self: center;
+}
+
+.tb-item-title-row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  line-height: 1;
+}
+
+.tb-item-title {
+  flex: 1;
+  display: block;
+  font-size: .9rem;
+  max-width: 100%;
+  line-height: 1.1rem;
+}
+
+.tb-item-has-after {
+  max-width: 70%;
+}
+
+.tb-item-sub-title {
+  line-height: 1;
+  margin-top: .2rem;
+  font-size: .8rem;
+  flex: 1;
+  display: block;
+  max-width: 100%;
+  line-height: 1.1rem;
+}
+
+.tb-item-after {
+  margin-left: auto;
+  color: fade(rgba(0, 0, 0, 1), 54%);
+  display: flex;
+  align-items: center;
+  font-size: .65rem;
+}
+
+.tb-item-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  position: relative;
+  overflow: hidden;
+  font-size: .7rem;
+  line-height: .9rem;
+  margin-top: .2rem;
+  max-height: 2rem;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  word-break: break-all;
+  color: fade(rgba(0, 0, 0, 1), 54%);
+}
+.font-bold{
+  font-weight: bold;
+}

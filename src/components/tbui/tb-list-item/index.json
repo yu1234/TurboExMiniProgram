@@ -1,0 +1,7 @@
+{
+  "component": true,
+  "usingComponents": {
+    "wxc-avatar": "../../minui/wxc-avatar/index",
+    "wxc-elip": "../../minui/wxc-elip/index"
+  }
+}

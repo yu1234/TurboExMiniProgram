@@ -54,8 +54,8 @@ let utils = {
   },
   defaultErrors: {
     dataEmptyError: new TbError('请求数据为空', 1001),
-    networkError: new TbError('网络错误', 1002),
-    serverError: new TbError('服务器错误', 1003)
+    networkError: new TbError('网络错误,请重试', 1002),
+    serverError: new TbError('服务器错误,请重试', 1003)
   },
   // 解析日期
   parseDate(strDate) {

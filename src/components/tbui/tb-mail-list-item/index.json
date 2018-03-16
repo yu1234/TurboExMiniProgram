@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "tb-list-item": "../tb-list-item/index"
+  }
+}

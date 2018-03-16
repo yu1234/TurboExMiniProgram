@@ -17,21 +17,54 @@
     config = {
       pages: [
         'pages/index',
+        'pages/debug/debug',
         'pages/login/login',
         'pages/main/main',
-        'pages/address/address'
+        'pages/fn/fn',
+        'pages/address/address',
+        'pages/me/me',
+        'pages/mail/list/mail-list'
       ],
       window: {
         backgroundTextStyle: 'light',
         navigationBarBackgroundColor: '#f7f7f8',
         navigationBarTitleText: 'WeChat',
-        navigationBarTextStyle: 'black'
+        navigationBarTextStyle: 'black',
+        navigationStyle: 'default'
+      },
+      tabBar: {
+        list: [
+          {
+            pagePath: 'pages/main/main',
+            text: '提醒',
+            iconPath: './assets/tab_icon_home_default.png',
+            selectedIconPath: './assets/tab_icon_home_selected.png'
+          },
+          {
+            pagePath: 'pages/fn/fn',
+            text: '功能',
+            iconPath: './assets/tab_icon_refresh_default.png',
+            selectedIconPath: './assets/tab_icon_refresh_selected.png'
+          },
+          {
+            pagePath: 'pages/address/address',
+            text: '地址本',
+            iconPath: './assets/tab_icon_address_book_default.png',
+            selectedIconPath: './assets/tab_icon_address_book_selected.png'
+          },
+          {
+            pagePath: 'pages/me/me',
+            text: '我',
+            iconPath: './assets/tab_icon_my_default.png',
+            selectedIconPath: './assets/tab_icon_my_selected.png'
+          }]
       }
     }
 
     globalData = {
       userInfo: null,
-      weUserInfo: null
+      weUserInfo: null,
+      systemInfo: {}
     }
 
     constructor() {
@@ -40,6 +73,15 @@
     }
 
     onLaunch() {
+      const that = this
+      wepy.getSystemInfo({
+        success: function (res) {
+          console.log('手机信息', res)
+          if (res) {
+            that.globalData.systemInfo = res
+          }
+        }
+      })
     }
 
     getWeUserInfo(cb) {
