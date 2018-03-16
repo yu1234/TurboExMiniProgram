@@ -10,17 +10,11 @@
     "clean": "find ./dist -maxdepth 1 -not -name 'project.config.json' -not -name 'dist' | xargs rm -rf",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "wepy": {
-    "module-a": false,
-    "./src/components/list": "./src/components/wepy-list.wpy"
-  },
+  "wepy": {},
   "author": "yu <836986488@qq.com>",
   "license": "MIT",
   "dependencies": {
-    "@minui/wxc-avatar": "^1.0.4",
-    "@minui/wxc-elip": "^1.0.5",
-    "@minui/wxc-popup": "^1.0.8",
-    "@minui/wxc-tab": "^1.0.7",
+    "@minui/wxc-icon": "^1.0.8",
     "redux": "^3.7.2",
     "redux-actions": "^2.2.1",
     "redux-promise": "^0.5.3",
