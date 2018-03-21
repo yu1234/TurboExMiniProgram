@@ -23,7 +23,8 @@
         'pages/fn/fn',
         'pages/address/address',
         'pages/me/me',
-        'pages/mail/list/mail-list'
+        'pages/mail/list/mail-list',
+        'pages/mail/read/read'
       ],
       window: {
         backgroundTextStyle: 'light',
@@ -37,27 +38,31 @@
           {
             pagePath: 'pages/main/main',
             text: '提醒',
-            iconPath: './assets/tab_icon_home_default.png',
-            selectedIconPath: './assets/tab_icon_home_selected.png'
+            iconPath: './assets/images/tab_icon_home_default.png',
+            selectedIconPath: './assets/images/tab_icon_home_selected.png'
           },
           {
             pagePath: 'pages/fn/fn',
             text: '功能',
-            iconPath: './assets/tab_icon_refresh_default.png',
-            selectedIconPath: './assets/tab_icon_refresh_selected.png'
+            iconPath: './assets/images/tab_icon_refresh_default.png',
+            selectedIconPath: './assets/images/tab_icon_refresh_selected.png'
           },
           {
             pagePath: 'pages/address/address',
             text: '地址本',
-            iconPath: './assets/tab_icon_address_book_default.png',
-            selectedIconPath: './assets/tab_icon_address_book_selected.png'
+            iconPath: './assets/images/tab_icon_address_book_default.png',
+            selectedIconPath: './assets/images/tab_icon_address_book_selected.png'
           },
           {
             pagePath: 'pages/me/me',
             text: '我',
-            iconPath: './assets/tab_icon_my_default.png',
-            selectedIconPath: './assets/tab_icon_my_selected.png'
+            iconPath: './assets/images/tab_icon_my_default.png',
+            selectedIconPath: './assets/images/tab_icon_my_selected.png'
           }]
+      },
+      debug: true,
+      networkTimeout: {
+        request: 12000
       }
     }
 

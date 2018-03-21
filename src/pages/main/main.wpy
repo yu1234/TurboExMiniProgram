@@ -149,6 +149,15 @@
             self.userInfo.name = ret.beanparam.data.name
             self.userInfo.accounts = ret.beanparam.data.accounts
             self.userInfo.uid = ret.beanparam.data.id
+            if (self.isArrayNotNull(self.userInfo.accounts)) {
+              let address = null
+              self.each(self.userInfo.accounts, function (value, index) {
+                if (self.userInfo.uid === value.id) {
+                  address = `${value.username || ''}@${value.domain || ''}`
+                }
+              })
+              self.userInfo.address = address
+            }
           }
         }
         // 查询用户空间使用情况

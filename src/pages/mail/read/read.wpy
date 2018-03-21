@@ -1,0 +1,223 @@
+<style lang="less">
+  .detailPopup {
+    height: 25rem;
+    .list {
+      margin-top: 1rem;
+      padding: 0 .5rem;
+    }
+    .item {
+      width: 25%;
+    }
+    .header {
+      font-size: .8rem;
+      color: rgb(153, 153, 153);
+      margin-bottom: .5rem;
+    }
+    .item-sub-title {
+      font-size: .7rem;
+      word-break: break-all;
+    }
+    .item-text {
+      font-size: .65rem;
+      word-break: break-all;
+    }
+  }
+
+  .attaches {
+    .item {
+      margin-top: .5rem;
+      background-color: rgb(238, 238, 238);
+    }
+  }
+</style>
+<template>
+  <tb-nav title="{{mail.subject}}"></tb-nav>
+  <view class="tb-content has-sub-header">
+    <view>
+      <tb-list-item avatar="{{mail.headerPhoto}}" sub-title="{{mail.fullTitle}}" bind:error="error">
+        <view slot="text">
+          <wxc-flex>
+            <wxc-elip class="tb-flex-item" style="flex-grow: 5;max-width: 90%">
+              <text>{{mail.formatTime}}</text>
+              <text space="{{true}}" decode="{{true}}"> 发至</text>
+              <text> {{mail.tosFormatName}}</text>
+            </wxc-elip>
+            <view class="tb-flex-item" style="flex-grow: 2;color: #49A9F2;text-align: right"
+                  @tap.stop="openPopup('detailPopupOpen')">详情
+            </view>
+          </wxc-flex>
+        </view>
+      </tb-list-item>
+    </view>
+    <view style="padding: 1rem .5rem">
+      <rich-text nodes="{{mail.content}}"></rich-text>
+    </view>
+    <view style="padding: 0 .5rem 1rem .5rem" class="attaches" wx:if="{{mail.attaches&&mail.attaches.length}}">
+      <block wx:for="{{mail.attaches}}" wx:key="{{item.id}}">
+        <tb-list-item item-class="item" title="{{item.name}}" text="{{item.formatSize}}" has-left has-right>
+          <view style="height: 2.5rem" slot="left">
+            <wxc-avatar class="tb-head-avatar" mold="square" src="{{item.icon}}">
+            </wxc-avatar>
+          </view>
+          <view slot="right" style="padding-right: .5rem">
+            <icon class="iconfont icon-nav_btn_next" style="font-size: 1.2rem"></icon>
+          </view>
+        </tb-list-item>
+      </block>
+    </view>
+  </view>
+  <!--详情弹出层-->
+  <tb-popup open="{{popup.detailPopupOpen}}" position="bottom" name="detailPopupOpen" bind:show="popupChange"
+            bind:hide="popupChange">
+    <scroll-view class="detailPopup" scroll-y>
+      <wxc-flex dir="top">
+        <view>
+          <view class="header" style="padding-left: .5rem;margin: .5rem 0 0 0">
+            <text>发件人</text>
+          </view>
+          <wxc-flex cross="center">
+            <view>
+              <tb-list-item avatar="{{mail.headerPhoto}}" sub-title="{{mail.title}}" bind:error="error"
+                            text="{{mail.address}}"></tb-list-item>
+            </view>
+          </wxc-flex>
+        </view>
+        <view class="list">
+          <view class="header">
+            <text>收件人</text>
+          </view>
+          <wxc-flex wx:if="{{mail.tos&&mail.tos.length>0}}" wrap="wrap">
+            <block wx:for="{{mail.tos}}" wx:key="{{item.id}}">
+              <view class="item">
+                <view class="text-center">
+                  <wxc-avatar class="tb-head-avatar" src="{{item.headerPhoto}}" bind:error="error">
+                  </wxc-avatar>
+                </view>
+                <view class="text-center">
+                  <text class="item-sub-title">{{item.name}}</text>
+                </view>
+                <view class="text-center">
+                  <text class="item-text">{{item.address}}</text>
+                </view>
+              </view>
+            </block>
+          </wxc-flex>
+        </view>
+        <view class="list">
+          <view class="header">
+            <text>抄送</text>
+          </view>
+          <wxc-flex wx:if="{{mail.ccs&&mail.ccs.length>0}}" wrap="wrap">
+            <block wx:for="{{mail.ccs}}" wx:key="{{item.id}}">
+              <view class="item">
+                <view class="text-center">
+                  <wxc-avatar class="tb-head-avatar" src="{{item.headerPhoto}}" bind:error="error">
+                  </wxc-avatar>
+                </view>
+                <view class="text-center">
+                  <text class="item-sub-title">{{item.name}}</text>
+                </view>
+                <view class="text-center">
+                  <text class="item-text">{{item.address}}</text>
+                </view>
+              </view>
+            </block>
+          </wxc-flex>
+        </view>
+        <view class="list">
+          <view class="header">
+            <text>密送</text>
+          </view>
+          <wxc-flex wx:if="{{mail.bccs&&mail.bccs.length>0}}" wrap="wrap">
+            <block wx:for="{{mail.bccs}}" wx:key="{{item.id}}">
+              <view class="item">
+                <view class="text-center">
+                  <wxc-avatar class="tb-head-avatar" src="{{item.headerPhoto}}" bind:error="error">
+                  </wxc-avatar>
+                </view>
+                <view class="text-center">
+                  <text class="item-sub-title">{{item.name}}</text>
+                </view>
+                <view class="text-center">
+                  <text class="item-text">{{item.address}}</text>
+                </view>
+              </view>
+            </block>
+          </wxc-flex>
+        </view>
+      </wxc-flex>
+    </scroll-view>
+  </tb-popup>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import BaseMixin from '../../../mixins/base'
+  import CommonMixin from '../../../mixins/common'
+  import PopupMixin from '../../../mixins/popup'
+
+  export default class Read extends wepy.page {
+    mixins = [BaseMixin, CommonMixin, PopupMixin]
+    config = {
+      navigationBarTitleText: '',
+      usingComponents: {
+        'tb-nav': '../../../components/tbui/tb-nav/index',
+        'tb-list-item': '../../../components/tbui/tb-list-item/index',
+        'wxc-elip': '../../../components/minui/wxc-elip/index',
+        'wxc-flex': '../../../components/minui/wxc-flex/index',
+        'tb-popup': '../../../components/tbui/tb-popup/index',
+        'wxc-avatar': '../../../components/minui/wxc-avatar/index'
+      }
+    }
+    components = {}
+    data = {
+      mail: {},
+      popup: {
+        detailPopupOpen: false
+      }
+    }
+    computed = {}
+    methods = {
+      error(e) {
+        debugger
+      }
+    }
+
+    onShow() {
+    }
+
+    onLoad(params) {
+      console.log(params)
+      let self = this
+      if (params.id) {
+        self.getMailById(params.id).then((mail) => {
+          console.log(mail)
+          self.mail = mail
+          wepy.setNavigationBarTitle({title: mail.title})
+          self.$apply()
+        }).catch((e) => {
+          wepy.showToast({
+            title: e.message,
+            icon: 'none',
+            complete() {
+              setTimeout(() => {
+                self.backPage()
+              }, 1000)
+            }
+          })
+        })
+      } else {
+        wepy.showToast({
+          title: '获取邮件失败,请重新打开邮件',
+          icon: 'none',
+          complete() {
+            setTimeout(() => {
+              self.backPage()
+            }, 1000)
+          }
+        })
+      }
+    }
+  }
+</script>
+

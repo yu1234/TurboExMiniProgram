@@ -8,7 +8,6 @@ export default class LoadMoreMixin extends wepy.mixin {
 
   onReachBottom() {
     if (!this.loadingMore && !this.noMoreDate) {
-      console.log('onReachBottom')
       this.loadingMore = true
       this.loadMore()
     }

@@ -12,7 +12,7 @@ page {
 }
 
 .tb-bar {
-  position: absolute;
+  position: fixed;
   right: 0;
   left: 0;
   z-index: 10;
@@ -22,34 +22,11 @@ page {
   backface-visibility: hidden;
 }
 
-.tb-bar-nav {
-  top: 0;
-  .title {
-    position: absolute;
-    display: block;
-    width: 100%;
-    padding: 0;
-    margin: 0 -.5rem;
-    font-size: .85rem;
-    font-weight: 500;
-    line-height: 2.2rem;
-    color: #3d4145;
-    text-align: center;
-    white-space: nowrap;
-  }
-  .pull-left {
-    float: left;
-  }
-  .pull-right {
-    float: right;
-  }
-}
-
 .tb-bar-tab {
   bottom: 0;
   z-index: 900;
   width: 100%;
-  height: 3rem;
+  height: 2.5rem;
   padding: 0;
   table-layout: fixed;
   border-top: 1px solid #e7e7e7;
@@ -62,7 +39,7 @@ page {
     position: relative;
     display: table-cell;
     width: 1%;
-    height: 3rem;
+    height: 2.5rem;
     color: #929292;
     text-align: center;
     vertical-align: middle;
@@ -95,7 +72,7 @@ page {
 }
 
 .tb-has-bottom-tab {
-  bottom: 3rem;
+  margin-bottom: 2.5rem;
 }
 
 .tb-nav-icon {
@@ -168,4 +145,10 @@ page {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tb-head-avatar {
+  display: inline-block;
+  width: 2.5rem;
+  height: 2.5rem;
 }

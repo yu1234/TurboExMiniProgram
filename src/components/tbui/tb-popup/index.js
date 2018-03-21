@@ -29,6 +29,10 @@ Component({
     overlay: {
       type: Boolean,
       value: true
+    },
+    name: {
+      type: String,
+      value: ''
     }
   },
   data: {
@@ -47,16 +51,16 @@ Component({
       this.setData({
         showPopup: true
       })
-      let myEventDetail = {aaa: 'aaa'} // detail对象，提供给事件监听函数
-      let myEventOption = {bbb: 'bbbb'} // 触发事件的选项
+      let myEventDetail = {name: this.data.name, type: 'show'} // detail对象，提供给事件监听函数
+      let myEventOption = {} // 触发事件的选项
       this.triggerEvent('show', myEventDetail, myEventOption)
     },
     hide() {
       this.setData({
         showPopup: false
       })
-      let myEventDetail = {cccc: 'cccc'} // detail对象，提供给事件监听函数
-      let myEventOption = {ddd: 'ddd'} // 触发事件的选项
+      let myEventDetail = {name: this.data.name, type: 'hide'} // detail对象，提供给事件监听函数
+      let myEventOption = {} // 触发事件的选项
       this.triggerEvent('hide', myEventDetail, myEventOption)
     }
   }

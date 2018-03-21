@@ -34,6 +34,22 @@ Component({
     top: {
       type: Boolean,
       value: false
+    },
+    attach: {
+      type: Boolean,
+      value: false
+    },
+    backlog: {
+      type: Boolean,
+      value: false
+    },
+    importance: {
+      type: Boolean,
+      value: false
+    },
+    star: {
+      type: Boolean,
+      value: false
     }
   },
   data: {},

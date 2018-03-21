@@ -53,6 +53,9 @@ let utils = {
     }
   },
   defaultErrors: {
+    customError(message) {
+      return new TbError(message, 1000)
+    },
     dataEmptyError: new TbError('请求数据为空', 1001),
     networkError: new TbError('网络错误,请重试', 1002),
     serverError: new TbError('服务器错误,请重试', 1003)
@@ -137,6 +140,18 @@ let utils = {
       return fmt
     }
     return date
+  },
+  /**
+   * 日期格式化
+   *
+   * @param dataStr
+   *            格式化日期字符串，支持格式yyyy-MM-dd hh:mm:ss, yyyy/MM/dd hh:mm:ss
+   * @param fmt
+   *            格式化格式
+   */
+  strFormatDate(dataStr, fmt) {
+    var date = utils.strToDate(dataStr)
+    return utils.formatDate(date, fmt)
   }
 }
 module.exports = utils

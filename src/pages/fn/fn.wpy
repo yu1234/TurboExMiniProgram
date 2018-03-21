@@ -25,6 +25,7 @@
 
   export default class Fn extends wepy.page {
     config = {
+      navigationBarTitleText: '功能',
       usingComponents: {
         'wxc-flex': '../../components/minui/wxc-flex/index',
         'wxc-avatar': '../../components/minui/wxc-avatar/index',
@@ -32,9 +33,7 @@
     }
     mixins = [BaseMixin]
     components = {}
-    data = {
-      navigationBarTitleText: '功能'
-    }
+    data = {}
     computed = {}
     methods = {
       /**

@@ -8,19 +8,16 @@ export default class BaseMixin extends wepy.mixin {
   methods = {
     tap() {
       this.mixin = 'mixin data was changed'
-      console.log('mixin method tap')
     }
   }
 
   onShow() {
-    console.log('mixin onShow')
   }
 
   onLoad() {
     if (this.$parent.globalData.systemInfo.statusbarHeight) {
       this.statusBarHeight = this.$parent.globalData.systemInfo.statusbarHeight
     }
-    console.log('mixin onLoad', this.navHeight)
   }
 
   loadPage(url) {
@@ -32,6 +29,12 @@ export default class BaseMixin extends wepy.mixin {
   loadTabPage(url) {
     wepy.switchTab({
       url: url
+    })
+  }
+
+  backPage(delta) {
+    wepy.navigateBack({
+      delta: delta
     })
   }
 

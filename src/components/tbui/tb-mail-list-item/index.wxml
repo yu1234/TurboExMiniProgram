@@ -1,9 +1,15 @@
 <view class="tb-mail-list-item" style="{{top?' background-color: rgb(255, 253, 217);':''}}">
   <tb-list-item avatar="{{avatar}}" title="{{title}}" title-after="{{titleAfter}}"
                 sub-title="{{subTitle}}" text="{{text}}" has-strip="{{unRead}}" title-bold="{{unRead}}"
-                has-right-slot="{{hasRight}}" bind:error="error">
+                has-right="{{hasRight}}" bind:error="error" has-sub-title-after-slot>
     <view slot="right">
       <slot name="right"></slot>
+    </view>
+    <view slot="subTitleAfter">
+      <image class="icon image" src="../image/mailing_list_icon_attachment_default.png" wx:if="{{attach}}"></image>
+      <image class="icon image1" src="../image/mailing_list_icon_backlog_default.png" wx:if="{{backlog}}"></image>
+      <image class="icon image1" src="../image/mailing_list_icon_importance_default.png" wx:if="{{importance}}"></image>
+      <image class="icon image1" src="../image/mailing_list_icon_star_default.png" wx:if="{{star}}"></image>
     </view>
   </tb-list-item>
 </view>

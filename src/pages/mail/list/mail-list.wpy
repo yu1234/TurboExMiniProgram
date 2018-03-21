@@ -1,50 +1,209 @@
+<style lang="less">
+  .list {
+    .item {
+      .content {
+        padding-left: .5rem;
+        padding-right: .5rem;
+        .left {
+
+        }
+        .right {
+
+        }
+        .avatar {
+          display: block;
+          width: 2.5rem;
+          height: 2.5rem;
+        }
+      }
+    }
+  }
+
+  .swipe-panel-right {
+    width: 10rem;
+    .item {
+      height: 2.5rem;
+      padding: .2rem;
+      .icon {
+        font-size: 1.2rem;
+        display: flex;
+      }
+      &.active {
+        background-color: rgb(238, 238, 238);
+      }
+      .folder-name {
+        font-size: .75rem;
+      }
+    }
+    .panel-gray-strip {
+      width: 100%;
+      height: .5rem;
+      background-color: rgb(238, 238, 238);
+    }
+  }
+
+  .markingPopupOpen {
+    width: 14rem;
+    min-height: 20rem;
+    overflow: auto;
+    .item {
+      height: 2rem;
+      padding: .2rem;
+      .icon {
+        font-size: 1rem;
+        display: flex;
+      }
+      .name {
+        font-size: .75rem;
+      }
+    }
+  }
+
+</style>
 <template>
-  <tb-nav has-right>
+  <tb-nav has-right has-left>
+    <view slot="left">
+      <icon class="iconfont icon-nav_btn_cancel tb-nav-icon" wx:if="{{config.edit}}" @tap="exitEdit()"></icon>
+    </view>
     <view slot="right">
-      <icon class="iconfont icon-nav_btn_mail_menu tb-nav-icon" @tap="openSwipePanel('')"></icon>
+      <icon class="iconfont icon-nav_btn_mail_menu tb-nav-icon" @tap="openPopup('swipePanelOpen')"
+            wx:if="{{!config.edit}}"></icon>
+      <icon class="iconfont icon-nav_btn_cancel_check tb-nav-icon" wx:if="{{config.edit&&!isCheckAll}}"
+            @tap="checkAllOrNot({{true}})"></icon>
+      <icon class="iconfont icon-nav_btn_check_all tb-nav-icon" wx:if="{{config.edit&&isCheckAll}}"
+            @tap="checkAllOrNot({{false}})"></icon>
     </view>
   </tb-nav>
-  <view class="tb-content has-sub-header" bindlongpress="longTap">
+  <view class="tb-content has-sub-header {{config.edit?'tb-has-bottom-tab':''}}" bindlongpress="longTap">
     <tb-mail-list-item avatar="{{item.headerPhoto}}" title="{{item.title}}" subTitle="{{item.subject}}"
                        text="{{item.text}}" titleAfter="{{item.date}}" un-read="{{item.unRead}}" top="{{item.top}}"
-                       has-right="{{config.edit}}"
+                       has-right="{{config.edit}}" attach="{{item.hasAttach}}" backlog="{{item.backlog}}"
+                       importance="{{item.importance}}" star="{{item.star}}"
                        wx:for="{{mails}}"
-                       wx:key="{{item.id}}">
-      <checkbox slot="right" color="#49A9F2"/>
+                       wx:key="{{item.id}}" @tap="readMail({{item.id}})">
+      <tb-checkbox slot="right" value="{{item.id}}" name="selected" model="{{selected}}" color="#49A9F2"
+                   bind:change="formChange"/>
     </tb-mail-list-item>
     <tb-loading-more loading wx:if="{{!noMoreDate}}"></tb-loading-more>
   </view>
   <!--侧边栏-->
-  <tb-popup position="right" open="{{swipePanelOpen}}" bind:show="swipePanelChange" bind:hide="swipePanelChange"  @tap="changeTab">
+  <tb-popup position="right" open="{{popup.swipePanelOpen}}" name="swipePanelOpen" bind:show="popupChange"
+            bind:hide="popupChange">
     <view class="swipe-panel-right">
       <wxc-flex dir="top" main="center">
-        <view wx:for="{{sysDefaultFolders}}" wx:key="{{item.id}}"
-              class="tb-flex-item item {{config.currentTab===item.id?'active':''}}">
-          <wxc-flex cross="center">
-            <view class="tb-flex-item" style="width: 20%">
-              <icon class="iconfont {{item.icon}} icon"></icon>
-            </view>
-            <view class="tb-flex-item" style="flex-grow: 4;width: {{item.hasChildNodes?'60%':'80%'}};">
-              <wxc-elip class="folder-name">{{item.name}}</wxc-elip>
-            </view>
-            <view class="tb-flex-item" style="width: 20%" wx:if="{{item.hasChildNodes}}">
-              <icon class="iconfont icon-next-m icon"></icon>
-            </view>
-          </wxc-flex>
-        </view>
+        <block wx:for="{{swipePanelFolder.currentFolders}}" wx:key="{{item.id}}">
+          <view class="tb-flex-item item {{config.currentTab===item.id?'active':''}}">
+            <wxc-flex cross="center" bind:tap="changeTab({{item}})">
+              <view class="tb-flex-item" style="width: 20%">
+                <icon class="iconfont {{item.icon}} icon"></icon>
+              </view>
+              <view class="tb-flex-item" style="flex-grow: 4;width: {{item.hasChildNodes?'60%':'80%'}};">
+                <wxc-elip class="folder-name">{{item.name}}</wxc-elip>
+              </view>
+              <view class="tb-flex-item" style="width: 20%" wx:if="{{item.hasChildNodes}}"
+                    @tap.stop="intoFolder('swipePanelFolder',{{item.id}})">
+                <icon class="iconfont icon-next-m icon" style="font-size: 1rem;color: #cccccc"></icon>
+              </view>
+            </wxc-flex>
+          </view>
+        </block>
       </wxc-flex>
-
+      <view class="panel-gray-strip"
+            wx:if="{{swipePanelFolder.currentFolderId&&swipePanelFolder.currentFolderId==='root'}}"></view>
+      <wxc-flex dir="top" main="center"
+                wx:if="{{swipePanelFolder.currentFolderId&&swipePanelFolder.currentFolderId==='root'}}">
+        <block wx:for="{{flagFolders}}" wx:key="{{item.id}}">
+          <view class="tb-flex-item item {{config.currentTab===item.id?'active':''}}">
+            <wxc-flex cross="center" bind:tap="changeTab({{item}})">
+              <view class="tb-flex-item" style="width: 20%">
+                <icon class="iconfont {{item.icon}} icon" style="color: {{item.color}};"></icon>
+              </view>
+              <view class="tb-flex-item" style="flex-grow: 4;width: 80%;">
+                <wxc-elip class="folder-name">{{item.name}}</wxc-elip>
+              </view>
+            </wxc-flex>
+          </view>
+        </block>
+      </wxc-flex>
+      <view class="tb-bar tb-bar-tab"
+            wx:if="{{swipePanelFolder.currentFolderId&&swipePanelFolder.currentFolderId!=='root'}}">
+        <wxc-flex dir="top" main="center" style="height: 2.5rem;">
+          <view style="font-size: .75rem;color: #49A9F2;padding-left: .5rem" @tap="backFolder('swipePanelFolder')">
+            <icon class="iconfont icon-move_mail_icon_back"></icon>
+            <view style="display: inline-block">上一级</view>
+          </view>
+        </wxc-flex>
+      </view>
     </view>
   </tb-popup>
-  <!-- <view class="tb-bar tb-bar-tab">
-     <view class="tb-tab-item">
-       <icon class="iconfont icon-move_mail_icon_recyc tb-tab-icon"></icon>
-     </view>
-     <view class="tb-tab-item">
-       <icon class="iconfont icon-move_mail_icon_recyc tb-tab-icon"></icon>
-     </view>
-   </view>-->
-
+  <!--底部工具栏-->
+  <view class="tb-bar tb-bar-tab" wx:if="{{config.edit}}">
+    <view class="tb-tab-item" @tap="tabBarTap('delete')">
+      <icon class="iconfont icon-bottom_btn_delete tb-tab-icon"></icon>
+    </view>
+    <view class="tb-tab-item" @tap="openPopup('markingPopupOpen')">
+      <icon class="iconfont icon-bottom_btn_marking tb-tab-icon"></icon>
+    </view>
+    <view class="tb-tab-item" @tap="openPopup('movePopupOpen')">
+      <icon class="iconfont icon-bottom_btn_move tb-tab-icon"></icon>
+    </view>
+    <view class="tb-tab-item" @tap="tabBarTap('forward')">
+      <icon class="iconfont icon-bottom_btn_forwardin tb-tab-icon"></icon>
+    </view>
+  </view>
+  <!--标记弹出层-->
+  <tb-popup open="{{popup.markingPopupOpen}}" name="markingPopupOpen" bind:show="popupChange" bind:hide="popupChange">
+    <view class="markingPopupOpen">
+      <wxc-flex dir="top" main="center">
+        <block wx:for="{{markingItems}}" wx:key="{{item.id}}">
+          <view class="tb-flex-item item">
+            <wxc-flex cross="center" bind:tap="onMarkingMail({{item}})">
+              <view class="tb-flex-item" style="width: 20%">
+                <icon class="iconfont {{item.icon}} icon"></icon>
+              </view>
+              <view class="tb-flex-item" style="flex-grow: 4;width: 80%">
+                <wxc-elip class="name">{{item.name}}</wxc-elip>
+              </view>
+            </wxc-flex>
+          </view>
+        </block>
+      </wxc-flex>
+    </view>
+  </tb-popup>
+  <!--移动弹出层-->
+  <tb-popup open="{{popup.movePopupOpen}}" name="movePopupOpen" bind:show="popupChange"
+            bind:hide="popupChange">
+    <view class="markingPopupOpen">
+      <wxc-flex dir="top" main="center"
+                class="{{movePopupFolder.currentFolderId&&movePopupFolder.currentFolderId!=='root'?'tb-has-bottom-tab':''}}">
+        <block wx:for="{{movePopupFolder.currentFolders}}" wx:key="{{item.id}}">
+          <view class="tb-flex-item item">
+            <wxc-flex cross="center" bind:tap="moveMailTap({{selected}},{{item}})">
+              <view class="tb-flex-item" style="width: 20%">
+                <icon class="iconfont {{item.icon}} icon"></icon>
+              </view>
+              <view class="tb-flex-item" style="flex-grow: 4;width: {{item.hasChildNodes?'60%':'80%'}};">
+                <wxc-elip class="name">{{item.name}}</wxc-elip>
+              </view>
+              <view class="tb-flex-item" style="width: 20%" wx:if="{{item.hasChildNodes}}"
+                    @tap.stop="intoFolder('movePopupFolder',{{item.id}})">
+                <icon class="iconfont icon-next-m icon" style="font-size: 1rem;color: #cccccc"></icon>
+              </view>
+            </wxc-flex>
+          </view>
+          <view class="tb-flex-item  tb-bar tb-bar-tab"
+                wx:if="{{movePopupFolder.currentFolderId&&movePopupFolder.currentFolderId!=='root'}}">
+            <wxc-flex dir="top" main="center" style="height: 2.5rem;">
+              <view style="font-size: .75rem;color: #49A9F2;padding-left: .5rem" @tap="backFolder('movePopupFolder')">
+                <icon class="iconfont icon-move_mail_icon_back"></icon>
+                <view style="display: inline-block">上一级</view>
+              </view>
+            </wxc-flex>
+          </view>
+        </block>
+      </wxc-flex>
+    </view>
+  </tb-popup>
 </template>
 
 <script>
@@ -55,27 +214,40 @@
   import BaseMixin from '../../../mixins/base'
   import PullDownRefreshMixin from '../../../mixins/pullDownRefresh'
   import LoadMoreMixin from '../../../mixins/loadMore'
-  import MailFolderMixin from '../../../mixins/mailFolder'
+  import MailOperatorMixin from '../../../mixins/mailOperator'
+  import FormMixin from '../../../mixins/form'
 
+  const flags = [
+    {id: 'star', name: '星标邮件', icon: 'icon-mailing_list_menu_ic1', color: 'rgb(255,162,0)', flag: '9'},
+    {
+      id: 'importance',
+      name: '待办邮件',
+      icon: 'icon-mailing_list_menu_ic1',
+      color: 'rgb(0,170,255)',
+      flag: '11'
+    },
+    {id: 'backlog', name: '重要邮件', icon: 'icon-mailing_list_menu_ic2', color: 'rgb(255,59,48)', flag: '14'}]
   export default class MailList extends wepy.page {
-    mixins = [BaseMixin, PullDownRefreshMixin, LoadMoreMixin, MailFolderMixin]
+    mixins = [BaseMixin, PullDownRefreshMixin, LoadMoreMixin, MailOperatorMixin, FormMixin]
     config = {
-      navigationBarTitleText: '邮件列表',
+      navigationBarTitleText: '收件箱',
       usingComponents: {
         'wxc-flex': '../../../components/minui/wxc-flex/index',
         'wxc-elip': '../../../components/minui/wxc-elip/index',
         'tb-mail-list-item': '../../../components/tbui/tb-mail-list-item/index',
         'tb-nav': '../../../components/tbui/tb-nav/index',
         'tb-popup': '../../../components/tbui/tb-popup/index',
-        'tb-loading-more': '../../../components/tbui/tb-load-more/index'
+        'tb-loading-more': '../../../components/tbui/tb-load-more/index',
+        'tb-checkbox': '../../../components/tbui/tb-checkbox/index'
       },
       enablePullDownRefresh: true,
       backgroundTextStyle: `dark`
     }
     components = {}
     data = {
-      swipePanelOpen: false,
       defaultHeaderPhoto: `${service.host}/img/av1.png`,
+      userHeaderPhoto: null,
+      userAddress: null,
       mails: [],
       config: {
         edit: false,
@@ -83,34 +255,100 @@
         pagesize: 15,
         fromindex: 0
       },
-      flags: ['star', 'importance', 'backlog']
+      flags: ['star', 'importance', 'backlog'],
+      flagFolders: flags,
+      selected: [],
+      popup: {
+        swipePanelOpen: false,
+        markingPopupOpen: false,
+        movePopupOpen: false
+      }
     }
-    computed = {}
+    computed = {
+      isCheckAll() {
+        if (this.selected.length >= this.mails.length) {
+          return true
+        } else {
+          return false
+        }
+      }
+    }
+    watch = {}
     methods = {
       longTap() {
-        console.log('longTap')
+        this.config.edit = true
       },
-      openSwipePanel() {
-        this.swipePanelOpen = true
+      openPopup(name) {
+        this.popup[name] = true
       },
-      swipePanelChange(e) {
-        if (e.type === 'show') {
-          this.swipePanelOpen = true
-        } else if (e.type === 'hide') {
-          this.swipePanelOpen = false
+      popupChange(e) {
+        let name = e.detail.name
+        let type = e.detail.type
+        if (type === 'show') {
+          if (this.popup[name] !== null && this.popup[name] !== undefined) {
+            this.popup[name] = true
+          }
+        } else if (type === 'hide') {
+          if (this.popup[name] !== null && this.popup[name] !== undefined) {
+            this.popup[name] = false
+          }
         }
       },
-      changeTab(tab) {
-        debugger
-        if (tab) {
-          return
+      changeTab(item) {
+        if (item && item.id) {
+          if (item.id === 'custom') {
+            if (item.hasChildNodes) {
+              this.intoFolder('swipePanelFolder', item.id)
+              this.config.currentTab = item.id
+            }
+          } else {
+            wepy.setNavigationBarTitle({title: item.name})
+            this.config.currentTab = item.id
+            this.refresh()
+            this.popup.swipePanelOpen = false
+          }
         }
-        if (tab === 'custom') {
-
+      },
+      exitEdit() {
+        this.config.edit = false
+        this.selected = []
+      },
+      checkAllOrNot(isCheckAll) {
+        if (isCheckAll) {
+          this.each(this.mails, (v, i) => {
+            if (v.id) {
+              this.selected.push(v.id)
+            }
+          })
         } else {
-          self.config.currentTab = tab
-          this.refresh()
+          this.selected = []
         }
+      },
+      tabBarTap(type) {
+        if (type === 'delete') {
+          this.logicDeleteMail(this.selected).then(() => {
+            wepy.hideLoading()
+            this.selected = []
+            this.refresh()
+          })
+        }
+      },
+      onMarkingMail(item) {
+        this.markingMail(this.selected, item).then(() => {
+          this.selected = []
+          this.refresh()
+          this.popup.markingPopupOpen = false
+        })
+      },
+      moveMailTap(ids, item) {
+        this.moveMailTap(ids, item).then(() => {
+          this.selected = []
+          this.refresh()
+          this.popup.movePopupOpen = false
+        })
+      },
+      readMail(id) {
+        this.loadPage(`/pages/mail/read/read?id=${id}`)
       }
     }
 
@@ -135,7 +373,11 @@
 
     onLoad() {
       let self = this
-      wepy.showLoading({title: '正在加载数据...'})
+      wepy.showLoading({title: '加载中...'})
+      if (self.$parent.globalData.userInfo) {
+        self.userHeaderPhoto = self.$parent.globalData.userInfo.headPhoto
+        self.userAddress = self.$parent.globalData.userInfo.address
+      }
       self.config.currentTab = 'inbox'
       self.refresh().then(function () {
         wepy.hideLoading()
@@ -162,8 +404,19 @@
               resolve()
             })
           })
-        } else if (self.flags.includes(self.config.currentTab)) {
-
+        } else if (self.flags.includes(self.config.currentTab)) { // 标记邮件
+          let flag = null
+          self.each(self.flagFolders, function (v, i) {
+            if (v.id === self.config.currentTab) {
+              flag = v
+            }
+          })
+          if (flag) {
+            self.getMailsByFlag(flag.flag, self.config.fromindex).then((flagMail) => {
+              self.refreshComplete(flagMail)
+              resolve()
+            })
+          }
         } else {
           self.getMailsByFolder(self.config.currentTab, self.config.fromindex).then((folderMail) => {
             self.refreshComplete(folderMail)
@@ -194,6 +447,22 @@
         self.getMailsByFolder(self.config.currentTab, self.config.fromindex).then((inboxMail) => {
           let newInboxMail = self.filter().topMailFilter(inboxMail)
           self.loadMoreComplete(newInboxMail)
+        })
+      } else if (self.flags.includes(self.config.currentTab)) { // 标记邮件
+        let flag = null
+        self.each(self.flagFolders, function (v, i) {
+          if (v.id === self.config.currentTab) {
+            flag = v
+          }
+        })
+        if (flag) {
+          self.getMailsByFlag(flag.flag, self.config.fromindex).then((flagMail) => {
+            self.loadMoreComplete(flagMail)
+          })
+        }
+      } else {
+        self.getMailsByFolder(self.config.currentTab, self.config.fromindex).then((folderMail) => {
+          self.loadMoreComplete(folderMail)
         })
       }
     }
@@ -328,6 +597,17 @@
                 }
               }
             }
+            let headerPhoto = 'null'
+            if (mail.fromid) {
+              headerPhoto = twFormatGetFileCallBeanUri('config.user.head.get', {
+                'isattach': false,
+                id: mail.fromid
+              })
+            } else if (from.account === this.userAddress) {
+              if (this.userHeaderPhoto) {
+                headerPhoto = this.userHeaderPhoto
+              }
+            }
             let ml = {
               id: mail.mailid,
               address: from.account || '',
@@ -336,10 +616,7 @@
               fromId: mail.fromid,
               text: mail.txtcontent || '',
               date: parseDate(mail.rcpttime),
-              headerPhoto: twFormatGetFileCallBeanUri('config.user.head.get', {
-                'isattach': false,
-                id: mail.fromid
-              }),
+              headerPhoto: headerPhoto,
               unRead: unRead,
               hasAttach: hasAttach,
               star: star,
@@ -353,45 +630,13 @@
       }
       return mls
     }
+
+    /**
+     * 删除邮件
+     * @param ids
+     */
+    deleteMailByIds(ids) {
+
+    }
   }
 </script>
-
-<style lang="less">
-  .list {
-    .item {
-      .content {
-        padding-left: .5rem;
-        padding-right: .5rem;
-        .left {
-
-        }
-        .right {
-
-        }
-        .avatar {
-          display: block;
-          width: 2.5rem;
-          height: 2.5rem;
-        }
-      }
-    }
-  }
-
-  .swipe-panel-right {
-    width: 10rem;
-    .item {
-      height: 2.5rem;
-      padding: .2rem;
-      .icon {
-        font-size: 1.2rem;
-        display: flex;
-      }
-      &.active {
-        background-color: rgb(238, 238, 238);
-      }
-      .folder-name {
-        font-size: .75rem;
-      }
-    }
-  }
-</style>

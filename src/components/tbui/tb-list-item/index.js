@@ -2,6 +2,7 @@ Component({
   options: {
     multipleSlots: true // 在组件定义时的选项中启用多slot支持
   },
+  externalClasses: ['sub-title-class','item-class'],
   properties: {
     avatar: {
       type: String,
@@ -39,20 +40,9 @@ Component({
       type: Boolean,
       value: false
     },
-    hasRightSlot: {
+    hasRight: {
       type: Boolean,
-      value: false,
-      observer(_hasRight) {
-        if (_hasRight === true) {
-          this.setData({
-            hasRight: true
-          })
-        } else {
-          this.setData({
-            hasRight: false
-          })
-        }
-      }
+      value: false
     },
     hasStrip: {
       type: Boolean,
@@ -63,7 +53,7 @@ Component({
       value: false
     }
   },
-  data: {hasRight: false},
+  data: {},
   methods: {
     onTap() {
       console.log(this)

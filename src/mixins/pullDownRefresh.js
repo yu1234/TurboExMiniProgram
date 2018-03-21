@@ -16,7 +16,6 @@ export default class PullDownRefreshMixin extends wepy.mixin {
   }
 
   _refreshComplete() {
-    console.log('PullDownRefreshMixin refreshComplete')
     this.refreshing = false
     wepy.stopPullDownRefresh()
   }
