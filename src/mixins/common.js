@@ -1,5 +1,6 @@
 import wepy from 'wepy'
 import {twCallBeanPromise, twFormatGetFileCallBeanUri} from '../utils/twmodule'
+import {getWid} from '../config'
 import {defaultErrors, strFormatDate} from '../utils/utils'
 import BaseMixin from './base'
 
@@ -80,7 +81,7 @@ export default class CommonMixin extends wepy.mixin {
           formatTime: strFormatDate(mailObj.rcpttime, 'yyyy/MM/dd hh:mm'),
           contents: contents,
           content: content,
-          attaches: this.attachesFormat(mailObj.attachs)
+          attaches: this.attachesFormat(mailObj.attachs, mailObj.mailid)
         }
         let calls = [this.formatMailPeople(oTos, rcptMap), this.formatMailPeople(oCcs, rcptMap), this.formatMailPeople(oBccs, rcptMap)]
         Promise.all(calls).then((rets) => {
@@ -235,6 +236,11 @@ export default class CommonMixin extends wepy.mixin {
         break
       }
     }
+    if (!content) {
+      if (contents[0].content) {
+        content = this.formatPlainCtn(contents[0].content)
+      }
+    }
     return content
   }
 
@@ -256,7 +262,34 @@ export default class CommonMixin extends wepy.mixin {
       htmlContent = this.clearHtmlContent(htmlContent)
       return htmlContent
     } else {
-      return null
+      return '<div></div>'
+    }
+  }
+
+  /**
+   * 整理text/plain内容
+   *
+   * @param ctn_plain
+   * @returns
+   */
+  formatPlainCtn(ctnPlain) {
+    if (ctnPlain) {
+      ctnPlain = ctnPlain.replace(/((\r\n){1})/g, '<br/>')
+      ctnPlain = ctnPlain.replace(/(\r{1}|\n{1})/g, '<br/>')
+      ctnPlain = ctnPlain.replace(/(\t{1})/g, '&nbsp;&nbsp;&nbsp;&nbsp;')
+      ctnPlain = ctnPlain.replace(/(\s{1})/g, '&nbsp;')
+      ctnPlain = ctnPlain.replace(/(href="((?:http|ftp|https):\/\/[\w\-_]+(?:\.[\w\-_]+)+(?:[\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?)")/g, 'href="$2" style="color: #2799ec;font-weight: bold;" target="_blank"')
+      ctnPlain = ctnPlain.replace(/\S*?((?:http|ftp|https):\/\/[\w\-_]+(?:\.[\w\-_]+)+(?:[\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?)/g,
+        function (m, c) {
+          if (m.indexOf('href=') !== -1 || m.indexOf('src=') !== -1) {
+            return m
+          }
+          let ret = m.replace(c, '<a href="' + c + '" style="color: #2799ec;font-weight: bold;" target="_blank">' + c + '</a>')
+          return ret
+        })
+      return ctnPlain
+    } else {
+      return '<div></div>'
     }
   }
 
@@ -304,18 +337,23 @@ export default class CommonMixin extends wepy.mixin {
     }
   }
 
-  attachesFormat(attaches) {
+  attachesFormat(attaches, mailId) {
     if (this.isArrayNotNull(attaches)) {
       let newAttaches = []
       this.each(attaches, (attach, i) => {
         if (attach.atid) {
+
+
           let temp = {
             id: attach.atid,
             name: attach.filename || '暂无',
             size: attach.len || 0,
-            formatSize: this.bytesToSize(attach.len || 0),
+            formatSize: this.bytesToSize(attach.len || 0)
           }
           let fileType = temp.name.substring(temp.name.lastIndexOf('.') + 1, temp.name.length).toLowerCase() || ''
+          let p = {mailid: mailId, atid: attach.atid}
+          let src = twFormatGetFileCallBeanUri('mail.client.getattach', p, fileType, false)
+          temp.downloadUrl = src
           temp.icon = this.getPhotoByFiletype(fileType)
           newAttaches.push(temp)
         }

@@ -5,7 +5,7 @@
       <tb-mail-list-item avatar="{{avatar}}" title="邮件列表测试" subTitle="subTitle"
                          text="text"
                          titleAfter="2018-01-01" unRead="{{true}}"
-                         wx:for="{{[1]}}">
+                         wx:for="{{[1]}}" wx:key="">
 
       </tb-mail-list-item>
       <tb-checkbox value="test" name="checkbox" model="{{checkbox}}" bind:change="formChange"></tb-checkbox>
@@ -13,6 +13,12 @@
       <tb-checkbox value="test2" name="checkbox" model="{{checkbox}}" bind:change="formChange"></tb-checkbox>
       <tb-checkbox value="test3" name="checkbox" model="{{checkbox}}" bind:change="formChange"></tb-checkbox>
     </view>
+  </view>
+  <view>
+      <view><text>自定义富文本测试</text></view>
+      <view>
+        <tb-rich-text tb-rich-text-content="{{htmlStr}}"></tb-rich-text>
+      </view>
   </view>
 </template>
 
@@ -32,6 +38,7 @@
         'tb-mail-list-item': '../../components/tbui/tb-mail-list-item/index',
         'tb-list-item': '../../components/tbui/tb-list-item/index',
         'tb-nav': '../../components/tbui/tb-nav/index',
+        'tb-rich-text': '../../components/tbui/tb-rich-text/index',
         'tb-checkbox': '../../components/tbui/tb-checkbox/index',
         'wxc-elip': '../../components/minui/wxc-elip/index'
       }
@@ -39,7 +46,52 @@
     components = {}
     data = {
       avatar: `${service.host}/img/av1.png`,
-      checkbox: []
+      checkbox: [],
+      htmlStr:'<table width="100%" style="text-align:center;box-shadow: 2px 2px 5px #888;">\n' +
+      ' <tr>\n' +
+      '   <th>Month</th>\n' +
+      '   <th>Savings</th>\n' +
+      '   <th>third</th>\n' +
+      ' </tr>\n' +
+      ' <tr>\n' +
+      '   <td>January</td>\n' +
+      '   <td>$100</td>\n' +
+      '   <td>$100</td>\n' +
+      ' </tr>\n' +
+      ' <tr>\n' +
+      '   <td>January1</td>\n' +
+      '   <td>$1001</td>\n' +
+      '   <td>$1001</td>\n' +
+      ' </tr>\n' +
+      '</table><br>\n' +
+      '<img style="box-shadow: 2px 2px 6px #888;" src="http://www.w3school.com.cn/i/eg_tulip.jpg" width="100%" alt="郁金香" />\n' +
+      '<ol>\n' +
+      '  <li>Coffee</li>\n' +
+      '  <li>Tea</li>\n' +
+      '  <li>Milk</li>\n' +
+      '</ol>\n' +
+      '<del>del style</del>,<ins>ins style</ins><br>\n' +
+      '<sub>下标</sub>,<sup>上标</sup>\n' +
+      '<br>\n' +
+      '<em>em标签</em>\n' +
+      '<ul>\n' +
+      '  <li>Coffee</li>\n' +
+      '  <li>Tea</li>\n' +
+      '  <li>Milk</li>\n' +
+      '</ul>\n' +
+      '<h1>这是标题 1</h1>\n' +
+      '<h2>这是标题 2</h2>\n' +
+      '<h3>这是标题 3</h3>\n' +
+      '<h4>这是标题 4</h4>\n' +
+      '<h5>这是标题 5</h5>\n' +
+      '<h6>这是标题 6</h6>\n' +
+      '<hr />\n' +
+      '<fieldset>\n' +
+      ' <legend>health information</legend>\n' +
+      ' height: <input type="text" />\n' +
+      ' weight: <input type="text" />\n' +
+      '</fieldset>\n' +
+      '<p><span>some text.</span>some other text.</p>'
     }
     computed = {}
     methods = {

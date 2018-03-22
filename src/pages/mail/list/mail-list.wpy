@@ -245,7 +245,6 @@
     }
     components = {}
     data = {
-      defaultHeaderPhoto: `${service.host}/img/av1.png`,
       userHeaderPhoto: null,
       userAddress: null,
       mails: [],
@@ -431,6 +430,8 @@
       self.mails = self.concat([], mails1, mails2)
       if (self.mails.length < self.config.pagesize) {
         self._loadMoreComplete(true)
+      } else {
+        self._loadMoreComplete(false)
       }
       self._refreshComplete()
       self.$apply()

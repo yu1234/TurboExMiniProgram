@@ -2,7 +2,7 @@ Component({
   options: {
     multipleSlots: true // 在组件定义时的选项中启用多slot支持
   },
-  externalClasses: ['sub-title-class','item-class'],
+  externalClasses: ['sub-title-class', 'item-class'],
   properties: {
     avatar: {
       type: String,

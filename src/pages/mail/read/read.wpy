@@ -1,4 +1,5 @@
 <style lang="less">
+
   .detailPopup {
     height: 25rem;
     .list {
@@ -49,8 +50,8 @@
         </view>
       </tb-list-item>
     </view>
-    <view style="padding: 1rem .5rem">
-      <rich-text nodes="{{mail.content}}"></rich-text>
+    <view style="padding: 1rem 0;">
+      <tb-rich-text tb-rich-text-content="{{mail.content}}"></tb-rich-text>
     </view>
     <view style="padding: 0 .5rem 1rem .5rem" class="attaches" wx:if="{{mail.attaches&&mail.attaches.length}}">
       <block wx:for="{{mail.attaches}}" wx:key="{{item.id}}">
@@ -166,7 +167,8 @@
         'wxc-elip': '../../../components/minui/wxc-elip/index',
         'wxc-flex': '../../../components/minui/wxc-flex/index',
         'tb-popup': '../../../components/tbui/tb-popup/index',
-        'wxc-avatar': '../../../components/minui/wxc-avatar/index'
+        'wxc-avatar': '../../../components/minui/wxc-avatar/index',
+        'tb-rich-text': '../../../components/tbui/tb-rich-text/index'
       }
     }
     components = {}
@@ -179,7 +181,7 @@
     computed = {}
     methods = {
       error(e) {
-        debugger
+        console.log(e)
       }
     }
 
@@ -193,7 +195,6 @@
         self.getMailById(params.id).then((mail) => {
           console.log(mail)
           self.mail = mail
-          wepy.setNavigationBarTitle({title: mail.title})
           self.$apply()
         }).catch((e) => {
           wepy.showToast({
