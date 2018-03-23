@@ -15,10 +15,12 @@
     </view>
   </view>
   <view>
-      <view><text>自定义富文本测试</text></view>
-      <view>
-        <tb-rich-text tb-rich-text-content="{{htmlStr}}"></tb-rich-text>
-      </view>
+    <view>
+      <text>自定义富文本测试</text>
+    </view>
+    <view>
+      <tb-rich-text tb-rich-text-content="{{htmlStr}}"></tb-rich-text>
+    </view>
   </view>
 </template>
 
@@ -47,7 +49,7 @@
     data = {
       avatar: `${service.host}/img/av1.png`,
       checkbox: [],
-      htmlStr:'<table width="100%" style="text-align:center;box-shadow: 2px 2px 5px #888;">\n' +
+      htmlStr: '<table width="100%" style="text-align:center;box-shadow: 2px 2px 5px #888;">\n' +
       ' <tr>\n' +
       '   <th>Month</th>\n' +
       '   <th>Savings</th>\n' +
@@ -106,6 +108,17 @@
 
     onShow() {
       console.log('debugger onLoad', this.navHeight)
+      let fileSystemManager = wepy.getFileSystemManager()
+      console.log('debugger onLoad', `${wx.env}/hello`)
+      fileSystemManager.mkdir({
+        dirPath: `${wx.env.USER_DATA_PATH}/hello`,
+        success() {
+          console.log('fileSystemManager.mkdir success')
+        },
+        fail(e) {
+          console.log('fileSystemManager.mkdir fail', e)
+        }
+      })
     }
 
     onLoad() {

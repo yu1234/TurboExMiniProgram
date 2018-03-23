@@ -109,7 +109,7 @@ let twmodule = {
     if (binindex) {
       _binindex = binindex
     }
-    let src = `${service.host}/getfile?file=${g}&_isattach=${isAttach || false}&_binindex=${_binindex}&ts=${twCurrentMills()}&wid=${getWid()}&_sessionid=${getSessionId()}`
+    let src = `${service.host}/getfile?file=${g}&_isattach=${isAttach || false}&_binindex=${_binindex}&ts=${twCurrentMills()}&wid=${getWid()}&_sessionid=${getSessionId()}&a=f.${filetype}`
     return src
   }
 }

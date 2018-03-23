@@ -1,0 +1,98 @@
+<template>
+  <video style="width: 100%;height: 100%" id="myVideo" src="{{src}}" autoplay="{{true}}" direction="{{90}}"
+         binderror="error"
+         bindwaiting="waiting"></video>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import BaseMixin from '../../mixins/base'
+  import {twFormatGetFileCallBeanUri} from '../../utils/twmodule'
+
+  export default class Address extends wepy.page {
+    mixins = [BaseMixin]
+    config = {
+      navigationBarTitleText: '视频',
+      usingComponents: {
+        'wxc-flex': '../../components/minui/wxc-flex/index'
+      }
+    }
+    components = {}
+    data = {
+      src: '',
+      videoContext: null,
+      type: ''
+    }
+    computed = {}
+    methods = {
+      error(e) {
+        console.log('video play error', e)
+      },
+      waiting(e) {
+        console.log('video play waiting', e)
+      }
+    }
+
+    onShow() {
+    }
+
+    onLoad(param) {
+      let self = this
+      this.videoContext = wepy.createVideoContext('myVideo')
+      if (param.params) {
+        let paramsJson = JSON.parse(param.params)
+        if (paramsJson.type === 'attach' && paramsJson.id) {
+          self.type = paramsJson.type
+          let src = twFormatGetFileCallBeanUri('mail.client.getattach', {
+            atid: paramsJson.id,
+            mailid: paramsJson.mailId,
+            filename: paramsJson.name
+          }, paramsJson.fileType, true)
+          wepy.hideLoading()
+          // wepy.showLoading({title: '加载中'})
+          wepy.downloadFile({
+            url: `${src}&a=.${paramsJson.fileType}`,
+            success: function (res) {
+              self.src = res.tempFilePath
+              console.log(self.src)
+              self.videoContext.requestFullScreen()
+              self.videoContext.play()
+              wepy.hideLoading()
+            },
+            fail(e) {
+              debugger
+              console.log(e)
+            },
+            complete() {
+              console.log('complete')
+            }
+          })
+        } else {
+          wepy.showToast({
+            title: '视频打开失败',
+            icon: 'none',
+            complete() {
+              setTimeout(() => {
+                self.backPage()
+              }, 500)
+            }
+          })
+        }
+      } else {
+        wepy.showToast({
+          title: '视频打开失败',
+          icon: 'none',
+          complete() {
+            setTimeout(() => {
+              self.backPage()
+            }, 500)
+          }
+        })
+      }
+    }
+  }
+</script>
+
+<style>
+
+</style>

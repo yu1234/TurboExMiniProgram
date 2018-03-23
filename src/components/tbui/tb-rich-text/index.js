@@ -1,5 +1,4 @@
 import WxParse from '../../../components/wxParse/wxParse'
-import HtmlToJson from './html2json'
 
 Component({
   properties: {
@@ -7,9 +6,7 @@ Component({
       type: String,
       value: '',
       observer(newVal) {
-        WxParse.wxParse('content', 'html', newVal, this, 5)
-        let transData = HtmlToJson.html2json(newVal, 'test')
-        console.log(transData)
+        // WxParse.wxParse('content', 'html', newVal, this, 5)
       }
     }
   },
@@ -19,11 +16,8 @@ Component({
      * a标签点击事件
      * @param e
      */
-    wxParseTagATap(src, e) {
-      console.log(src)
-      let myEventDetail = {dataset: e.currentTarget.dataset, src: e.currentTarget.dataset.src}
-      let myEventOption = {} // 触发事件的选项
-      this.triggerEvent('onTagA', myEventDetail, myEventOption)
+    onTap(e) {
+      console.log(e)
     },
     wxParseImgError(e) {
       console.log(e)

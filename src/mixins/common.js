@@ -1,13 +1,45 @@
 import wepy from 'wepy'
 import {twCallBeanPromise, twFormatGetFileCallBeanUri} from '../utils/twmodule'
-import {getWid} from '../config'
+import {localTempFileCache} from '../cache'
 import {defaultErrors, strFormatDate} from '../utils/utils'
 import BaseMixin from './base'
 
 export default class CommonMixin extends wepy.mixin {
+  canPreviewObj = {
+    doc: 'word',
+    xls: 'word',
+    ppt: 'word',
+    pdf: 'word',
+    docx: 'word',
+    xlsx: 'word',
+    pptx: 'word',
+    txt: 'word',
+    png: 'img',
+    jpeg: 'img',
+    jpg: 'img',
+    gif: 'img'
+    /* mp4: 'video',
+     avi: 'video',
+     rmvb: 'video',
+     rm: 'video',
+     asf: 'video',
+     divx: 'video',
+     mpg: 'video',
+     flv: 'video',
+     mpeg: 'video',
+     mpe: 'video',
+     wmv: 'video',
+     mkv: 'video' */
+  }
   mixins = [BaseMixin]
-  data = {}
+  data = {
+    fileSystemManager: null
+  }
   methods = {}
+
+  onLoad() {
+    this.fileSystemManager = wepy.getFileSystemManager()
+  }
 
   /**
    * 获取邮件by id
@@ -342,25 +374,32 @@ export default class CommonMixin extends wepy.mixin {
       let newAttaches = []
       this.each(attaches, (attach, i) => {
         if (attach.atid) {
-
-
           let temp = {
             id: attach.atid,
             name: attach.filename || '暂无',
             size: attach.len || 0,
             formatSize: this.bytesToSize(attach.len || 0)
           }
-          let fileType = temp.name.substring(temp.name.lastIndexOf('.') + 1, temp.name.length).toLowerCase() || ''
-          let p = {mailid: mailId, atid: attach.atid}
-          let src = twFormatGetFileCallBeanUri('mail.client.getattach', p, fileType, false)
+          let fileType = this.getFileType(temp.name)
+          let p = {mailid: mailId, atid: attach.atid, filename: temp.name}
+          let src = twFormatGetFileCallBeanUri('mail.client.getattach', p, fileType, true)
           temp.downloadUrl = src
-          temp.icon = this.getPhotoByFiletype(fileType)
+          temp.icon = this.getPhotoByFileType(fileType)
           newAttaches.push(temp)
         }
       })
       return newAttaches
     } else {
       return []
+    }
+  }
+
+  getFileType(name) {
+    if (name) {
+      let fileType = name.substring(name.lastIndexOf('.') + 1, name.length).toLowerCase() || ''
+      return fileType
+    } else {
+      return ''
     }
   }
 
@@ -380,13 +419,310 @@ export default class CommonMixin extends wepy.mixin {
   }
 
   /**
+   * 附件预览
+   * @param obj
+   */
+  attachPreview(obj) {
+    return new Promise(resolve => {
+      if (obj) {
+        if (obj.name) {
+          let fileType = this.getFileType(obj.name)
+          let can = this.checkCanPreview(fileType)
+          if (can === 'word') {
+            this.previewWordFile({
+              id: obj.id,
+              filePath: obj.src,
+              fileType: fileType,
+              success(tempPath) {
+                resolve(true)
+              },
+              fail() {
+                resolve(false)
+              }
+            })
+          } else if (can === 'img') {
+            this.previewImgFile({
+              id: obj.id,
+              filePath: obj.src,
+              fileType: fileType,
+              success(tempPath) {
+                resolve(true)
+              },
+              fail() {
+                resolve(false)
+              }
+            })
+          } else if (can === 'video') {
+            this.previewVideoFile({
+              id: obj.id,
+              name: obj.name,
+              filePath: obj.src,
+              fileType: fileType,
+              mailId: obj.mailId,
+              success(tempPath) {
+                resolve(true)
+              },
+              fail() {
+                resolve(false)
+              }
+            })
+          } else {
+            this.previewOtherFile({
+              id: obj.id,
+              filePath: obj.src,
+              fileType: fileType,
+              success(tempPath) {
+                resolve(true)
+              },
+              fail() {
+                resolve(false)
+              }
+            })
+          }
+        } else {
+          resolve(false)
+        }
+      } else {
+        resolve(false)
+      }
+    })
+  }
+
+  /**
+   * 检测是否可以预览
+   * @param fileType
+   * @return 预览类型
+   */
+  checkCanPreview(fileType) {
+    if (this.canPreviewObj[fileType]) {
+      return this.canPreviewObj[fileType]
+    } else {
+      return false
+    }
+  }
+
+  /**
+   * 文本预览
+   */
+  previewWordFile(OBJECT) {
+    let self = this
+    if (!OBJECT) {
+      if (self.isFunction(OBJECT.fail)) {
+        OBJECT.fail()
+      }
+      if (self.isFunction(OBJECT.complete)) {
+        OBJECT.complete()
+      }
+      return
+    }
+    wepy.showLoading({title: '加载文件中...'})
+    if (!localTempFileCache[OBJECT.id]) {
+      wepy.downloadFile({
+        url: OBJECT.filePath,
+        success: function (res) {
+          var filePath = res.tempFilePath
+          console.log(filePath)
+          wepy.openDocument({
+            filePath: filePath,
+            fileType: OBJECT.fileType,
+            success() {
+              wepy.hideLoading()
+              if (OBJECT.id) {
+                localTempFileCache[OBJECT.id] = filePath
+              }
+              if (self.isFunction(OBJECT.success)) {
+                OBJECT.success()
+              }
+            },
+            fail(e) {
+              wepy.hideLoading()
+              wepy.showToast({title: '预览失败,请检测文件是否损坏', icon: 'none'})
+              if (self.isFunction(OBJECT.fail)) {
+                OBJECT.fail(e)
+              }
+            },
+            complete() {
+              wepy.hideLoading()
+              if (self.isFunction(OBJECT.complete)) {
+                OBJECT.complete()
+              }
+            }
+          })
+        },
+        fail(e) {
+          wepy.hideLoading()
+          wepy.showToast({title: '预览失败,请检测文件是否损坏', icon: 'none'})
+          if (self.isFunction(OBJECT.fail)) {
+            OBJECT.fail(e)
+          }
+        },
+        complete() {
+          wepy.hideLoading()
+          if (self.isFunction(OBJECT.complete)) {
+            OBJECT.complete()
+          }
+        }
+      })
+    } else {
+      wepy.openDocument({
+        filePath: localTempFileCache[OBJECT.id],
+        fileType: OBJECT.fileType,
+        success() {
+          wepy.hideLoading()
+          if (self.isFunction(OBJECT.success)) {
+            OBJECT.success()
+          }
+        },
+        fail(e) {
+          wepy.hideLoading()
+          wepy.showToast({title: '预览失败,请检测文件是否损坏', icon: 'none'})
+          if (self.isFunction(OBJECT.fail)) {
+            OBJECT.fail(e)
+          }
+        },
+        complete() {
+          wepy.hideLoading()
+          if (self.isFunction(OBJECT.complete)) {
+            OBJECT.complete()
+          }
+        }
+      })
+    }
+  }
+
+  /**
+   * 图片预览
+   * @param obj
+   */
+  previewImgFile(obj) {
+    let self = this
+    if (!obj) {
+      if (self.isFunction(obj.fail)) {
+        obj.fail()
+      }
+      if (self.isFunction(obj.complete)) {
+        obj.complete()
+      }
+      return
+    }
+    wepy.showLoading({title: '加载图片中...'})
+    wepy.previewImage({
+      urls: [obj.filePath], // 需要预览的图片http链接列表
+      success: function (res) {
+        wepy.hideLoading()
+        if (self.isFunction(obj.success)) {
+          obj.success()
+        }
+      },
+      fail(e) {
+        wepy.hideLoading()
+        wepy.showToast({title: '预览失败,请检测文件是否损坏', icon: 'none'})
+        if (self.isFunction(obj.fail)) {
+          obj.fail(e)
+        }
+      },
+      complete() {
+        wepy.hideLoading()
+        if (self.isFunction(obj.complete)) {
+          obj.complete()
+        }
+      }
+
+    })
+  }
+
+  /**
+   * 视频预览
+   */
+  previewVideoFile(obj) {
+    let self = this
+    if (!obj) {
+      if (self.isFunction(obj.fail)) {
+        obj.fail()
+      }
+      if (self.isFunction(obj.complete)) {
+        obj.complete()
+      }
+      return
+    }
+    if (obj.filePath) {
+      let p = {
+        id: obj.id,
+        name: obj.name,
+        fileType: obj.fileType,
+        type: 'attach',
+        mailId: obj.mailId
+
+      }
+      let params = JSON.stringify(p)
+      self.loadPage(`/pages/video/video?params=${params}`)
+    } else {
+      wepy.showToast({title: '播放失败,请检测文件是否损坏', icon: 'none'})
+      obj.fail()
+    }
+  }
+
+  /**
+   * 其他文件预览处理
+   */
+  previewOtherFile(obj) {
+    wepy.showToast({title: '对不起,该附件不支持预览', icon: 'none'})
+  }
+
+  downloadFile(obj) {
+    let self = this
+    if (!obj) {
+      if (self.isFunction(obj.fail)) {
+        obj.fail()
+      }
+      if (self.isFunction(obj.complete)) {
+        obj.complete()
+      }
+      return
+    }
+    wepy.showLoading({title: '下载中...'})
+    wepy.downloadFile({
+      url: obj.filePath,
+      success: function (res) {
+        debugger
+        wepy.hideLoading()
+        self.fileSystemManager.access({
+          path: res.tempFilePath,
+          success() {
+            console.log('.fileSystemManager.acess success')
+          },
+          fail(e) {
+            console.log('.fileSystemManager.acess', e)
+          }
+        })
+        if (self.isFunction(obj.success)) {
+          obj.success()
+        }
+      },
+      fail(e) {
+        wepy.hideLoading()
+        wepy.showToast({title: '文件下载失败,请稍后重试', icon: 'none'})
+        if (self.isFunction(obj.fail)) {
+          obj.fail(e)
+        }
+      },
+      complete() {
+        wepy.hideLoading()
+        if (self.isFunction(obj.complete)) {
+          obj.complete()
+        }
+      }
+    })
+  }
+
+  /**
    * 获取文件类型图片
    *
    * @param filetype
    *            文件类型
    * @returns
    */
-  getPhotoByFiletype(fileType) {
+  getPhotoByFileType(fileType) {
     let fileTypeRel = {
       zip: '/assets/images/attachment_icon_compressed_m_default.png',
       tar: '/assets/images/attachment_icon_compressed_m_default.png',

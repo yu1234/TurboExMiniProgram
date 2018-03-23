@@ -1,5 +1,4 @@
 <style lang="less">
-
   .detailPopup {
     height: 25rem;
     .list {
@@ -30,6 +29,7 @@
       background-color: rgb(238, 238, 238);
     }
   }
+
 </style>
 <template>
   <tb-nav title="{{mail.subject}}"></tb-nav>
@@ -55,13 +55,15 @@
     </view>
     <view style="padding: 0 .5rem 1rem .5rem" class="attaches" wx:if="{{mail.attaches&&mail.attaches.length}}">
       <block wx:for="{{mail.attaches}}" wx:key="{{item.id}}">
-        <tb-list-item item-class="item" title="{{item.name}}" text="{{item.formatSize}}" has-left has-right>
+        <tb-list-item item-class="item" title="{{item.name}}" text="{{item.formatSize}}" has-left has-right
+                      @tap.stop="attachItemTap('item',{{item}})">
           <view style="height: 2.5rem" slot="left">
             <wxc-avatar class="tb-head-avatar" mold="square" src="{{item.icon}}">
             </wxc-avatar>
           </view>
           <view slot="right" style="padding-right: .5rem">
-            <icon class="iconfont icon-nav_btn_next" style="font-size: 1.2rem"></icon>
+            <icon class="iconfont icon-nav_btn_next" style="font-size: 1.2rem"
+                  @tap.stop="attachItemTap('icon',{{item}})"></icon>
           </view>
         </tb-list-item>
       </block>
@@ -175,13 +177,50 @@
     data = {
       mail: {},
       popup: {
-        detailPopupOpen: false
+        detailPopupOpen: false,
+        attachPopupOpen: false
       }
     }
     computed = {}
     methods = {
       error(e) {
         console.log(e)
+      },
+      /**
+       * 附件点击事件
+       * @param item
+       */
+      attachItemTap(type, item) {
+        let self = this
+        if (type === 'item') {
+          this.attachPreview({
+            id: item.id,
+            name: item.name,
+            src: item.downloadUrl,
+            mailId: self.mail.id
+          }).then((can) => {
+            if (!can) {
+              console.log('预览失败')
+            }
+          })
+        } else if (type === 'icon') {
+          wepy.showActionSheet({
+            itemList: ['转发', '下载', '转存'],
+            success(obj) {
+              if (obj.tapIndex === 1) {
+                self.downloadFile({
+                  filePath: item.downloadUrl,
+                  success() {
+                  },
+                  fail() {
+                  },
+                  complete() {
+                  }
+                })
+              }
+            }
+          })
+        }
       }
     }
 
@@ -189,21 +228,23 @@
     }
 
     onLoad(params) {
-      console.log(params)
       let self = this
       if (params.id) {
+        wepy.showLoading({title: '加载邮件中...'})
         self.getMailById(params.id).then((mail) => {
           console.log(mail)
           self.mail = mail
           self.$apply()
+          wepy.hideLoading()
         }).catch((e) => {
+          wepy.hideLoading()
           wepy.showToast({
             title: e.message,
             icon: 'none',
             complete() {
               setTimeout(() => {
                 self.backPage()
-              }, 1000)
+              }, 500)
             }
           })
         })
@@ -214,11 +255,10 @@
           complete() {
             setTimeout(() => {
               self.backPage()
-            }, 1000)
+            }, 500)
           }
         })
       }
     }
   }
 </script>
-
