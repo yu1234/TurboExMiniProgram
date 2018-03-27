@@ -1,0 +1,1 @@
+<view class="zan-tag zan-tag--{{defaultClass}}  custom-class"><slot></slot></view>

@@ -19,7 +19,15 @@
       <text>自定义富文本测试</text>
     </view>
     <view>
-      <tb-rich-text tb-rich-text-content="{{htmlStr}}"></tb-rich-text>
+      <!-- <tb-rich-text tb-rich-text-content="{{htmlStr}}"></tb-rich-text>-->
+    </view>
+  </view>
+  <view>
+    <view>
+      <text>写邮件测试</text>
+    </view>
+    <view>
+      <button @tap="writeMail">写邮件</button>
     </view>
   </view>
 </template>
@@ -103,6 +111,9 @@
       },
       onTap() {
         console.log(this.checkbox)
+      },
+      writeMail() {
+        this.loadPage('/pages/mail/write/write')
       }
     }
 

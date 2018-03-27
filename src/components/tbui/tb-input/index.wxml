@@ -1,0 +1,16 @@
+<view class="tb-input" name="{{name}}">
+  <view class="tb-label" wx:if="{{title}}">
+    <text space="{{true}}" decode="{{true}}">{{title}}</text>
+  </view>
+  <view class="tb-content">
+    <input value="{{value}}" type="{{type}}" password="{{password}}" placeholder="{{placeholder}}"
+           placeholder-style="{{placeholderStyle}}" placeholder-class="{{placeholderClass}}"
+           disabled="{{disabled}}" focus="{{focus}}" cursor-spacing="{{cursorSpacing}}"
+           confirm-type="{{  confirmType}}" confirm-hold="{{confirmHold}}" cursor="{{cursor}}"
+           selection-start="{{selectionstart}}" selection-end="{{selectionEnd}}" adjust-position="{{adjustPosition}}"
+           bindinput="onInput" bindfocus="onFocus" bindblur="onBlur" bindconfirm="onConfirm" style="width: {{inputValue}}px;"/>
+  </view>
+  <view class="right" wx:if="{{hasRight}}">
+    <slot name="right"></slot>
+  </view>
+</view>

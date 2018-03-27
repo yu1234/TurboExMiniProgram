@@ -1,0 +1,28 @@
+<view class="input-tag" name="{{name}}">
+  <view class="input">
+    <view class="title" wx:if="{{title}}">
+      <text space="{{true}}" decode="{{true}}">{{title}}</text>
+    </view>
+    <view class="content" catch:tap="onFocus">
+      <view class="tag-box">
+        <block wx:for="{{tags}}" wx:key="{{item.id}}">
+          <tb-tag custom-class="tag" catch:tap="tagTap" data-index="{{index}}">{{item.text}}</tb-tag>
+        </block>
+        <view class="text">
+          <input type="text" focus="{{inputFocus}}" bind:blur="onBlur" bindfocus="onFocus" bindinput="onInput"
+                 value="{{inputValue}}" style="width:{{inputWidth}}px;max-width: {{inputMaxValue}}px;"
+                 class="tag-input"/>
+        </view>
+      </view>
+    </view>
+    <view class="right">
+      <icon class="iconfont icon-online_diskn_icon_ad" style="color:#49A9F2;font-size: 1rem"
+            catch:tap="rightIconTap"></icon>
+    </view>
+  </view>
+  <view class="auto-compete-list" wx:if="{{autoCompeteShow}}">
+    <block wx:for="{{autoCompeteList}}" wx:key="{{item.id}}">
+      <view class="item" data-item="{{item}}" catchtap="autoCompeteItemTap">{{item.text}}</view>
+    </block>
+  </view>
+</view>

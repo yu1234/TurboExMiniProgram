@@ -1,0 +1,185 @@
+<style lang="less">
+  .from-item {
+    padding: .5rem;
+    border-bottom: 1px silver solid;
+  }
+
+  .attachPopup {
+    height: 4.75rem;
+
+    .tb-avatar {
+      display: inline-flex;
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      background: rgb(245, 245, 245);;
+      color: black;
+    }
+    .attach-item {
+      flex: 1 1 auto;
+    }
+    .attaches {
+      .item {
+        margin-top: .5rem;
+        background-color: rgb(238, 238, 238);
+      }
+    }
+  }
+</style>
+<template>
+  <tb-nav has-right>
+    <view slot="right">
+      <icon class="iconfont icon-nav_btn_send tb-nav-icon" @tap=""></icon>
+    </view>
+  </tb-nav>
+  <view class="tb-content has-sub-header">
+    <view class="from-item">
+      <tb-input-tag  sys-font-size="{{sysFontSize}}" title="{{inputTitle.title}}"></tb-input-tag>
+    </view>
+    <view class="from-item" wx:if="{{!showOtherInput}}" @tap="onShowOtherInput">
+      <text style="color: #49a9f2">抄送/密送</text>
+    </view>
+    <view class="from-item" wx:if="{{showOtherInput}}">
+      <tb-input-tag  sys-font-size="{{sysFontSize}}"  title="{{inputTitle.title1}}"></tb-input-tag>
+    </view>
+    <view class="from-item" wx:if="{{showOtherInput}}">
+      <tb-input-tag   sys-font-size="{{sysFontSize}}"  title="{{inputTitle.title2}}"></tb-input-tag>
+    </view>
+    <view class="from-item">
+      <tb-input  title="{{inputTitle.title2}}" has-right>
+        <view slot="right">
+          <icon class="iconfont icon-compose_mail_btn_add" style="color: rgb(255, 195, 0);font-size: 1rem"
+                @tap.stop="chooseUploadAttach"></icon>
+        </view>
+      </tb-input>
+    </view>
+    <view style="padding: 0 .5rem .2rem .5rem" class="attaches" wx:if="{{mail.attachs&&mail.attachs.length}}">
+      <block wx:for="{{mail.attachs}}" wx:key="{{item.id}}">
+        <tb-list-item item-class="item" title="{{item.name}}" text="{{item.formatSize}}" has-left has-right
+                      @tap.stop="attachItemTap('item',{{item}})">
+          <view style="height: 2.5rem" slot="left">
+            <wxc-avatar class="tb-head-avatar" mold="square" src="{{item.icon}}">
+            </wxc-avatar>
+          </view>
+          <view slot="right" style="padding-right: .5rem">
+            <icon class="iconfont icon-nav_btn_next" style="font-size: 1.2rem"
+                  @tap.stop="attachItemTap('icon',{{item}})"></icon>
+          </view>
+        </tb-list-item>
+      </block>
+    </view>
+    <view class="from-item">
+      <textarea style="width: 100%;" maxlength="{{-1}}"></textarea>
+    </view>
+  </view>
+  <!--上传附件弹出层-->
+  <tb-popup open="{{popup.attachPopupOpen}}" position="bottom" name="attachPopupOpen" bind:show="popupChange"
+            bind:hide="popupChange">
+    <view class="attachPopup">
+      <wxc-flex main="center" cross="center">
+        <view class="attach-item text-center" @tap="chooseImage">
+          <wxc-avatar class="tb-avatar">
+            <icon class="iconfont icon-add_attachment_icon_4" style="font-size: 1.8rem"></icon>
+          </wxc-avatar>
+          <view>
+            <text>选择图片</text>
+          </view>
+        </view>
+        <view class="attach-item text-center" @tap="chooseVideo">
+          <wxc-avatar class="tb-avatar">
+            <icon class="iconfont icon-aui-icon-video" style="font-size: 1.8rem"></icon>
+          </wxc-avatar>
+          <view>
+            <text>选择视频</text>
+          </view>
+        </view>
+        <view class=" attach-item  text-center" @tap="chooseFileByNetDisk">
+          <wxc-avatar class="tb-avatar">
+            <icon class="iconfont icon-function_icon_online" style="font-size: 1.8rem"></icon>
+          </wxc-avatar>
+          <view>
+            <text>选择网盘</text>
+          </view>
+        </view>
+      </wxc-flex>
+    </view>
+  </tb-popup>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import BaseMixin from '../../../mixins/base'
+  import PopupMixin from '../../../mixins/popup'
+
+  export default class Write extends wepy.page {
+    mixins = [BaseMixin, PopupMixin]
+    config = {
+      navigationBarTitleText: '写邮件',
+      usingComponents: {
+        'tb-nav': '../../../components/tbui/tb-nav/index',
+        'tb-list-item': '../../../components/tbui/tb-list-item/index',
+        'tb-input-tag': '../../../components/tbui/tb-input-tag/index',
+        'tb-input': '../../../components/tbui/tb-input/index',
+        'wxc-flex': '../../../components/minui/wxc-flex/index',
+        'wxc-avatar': '../../../components/minui/wxc-avatar/index',
+        'tb-popup': '../../../components/tbui/tb-popup/index'
+      }
+    }
+    components = {}
+    data = {
+      inputTitle: {
+        title: '收件人:',
+        title1: '抄&emsp;送:',
+        title2: '密&emsp;送:',
+        title3: '主&emsp;题'
+      },
+      showOtherInput: false,
+      popup: {
+        attachPopupOpen: false
+      },
+      mail: {
+        attachs: []
+      }
+    }
+    computed = {}
+    methods = {
+      onShowOtherInput() {
+        this.showOtherInput = true
+      },
+      chooseUploadAttach() {
+        this.openPopup('attachPopupOpen')
+      },
+      chooseImage() {
+        wepy.chooseImage({
+          success(res) {
+
+          },
+          fail(res) {
+
+          }
+        })
+      },
+      chooseVideo() {
+        wepy.chooseVideo({
+          success(res) {
+
+          },
+          fail(res) {
+
+          }
+        })
+      },
+      chooseFileByNetDisk() {
+        this.loadPage('/pages/netdisk/selector/selector?selector=uploadFile')
+      }
+    }
+
+    onShow() {
+    }
+
+    onLoad() {
+    }
+  }
+</script>
+
+

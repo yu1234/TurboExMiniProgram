@@ -685,6 +685,7 @@ export default class CommonMixin extends wepy.mixin {
       url: obj.filePath,
       success: function (res) {
         debugger
+        console.log(`${wx.env.USER_DATA_PATH}`)
         wepy.hideLoading()
         self.fileSystemManager.access({
           path: res.tempFilePath,

@@ -1,4 +1,5 @@
 import WxParse from '../../../components/wxParse/wxParse'
+import Wxmlify from '../../wxmlify/wxmlify'
 
 Component({
   properties: {
@@ -7,10 +8,16 @@ Component({
       value: '',
       observer(newVal) {
         // WxParse.wxParse('content', 'html', newVal, this, 5)
+        let wxmlify = new Wxmlify(newVal, this, {})
+        this.setData({
+          wxmlify: wxmlify
+        })
       }
     }
   },
-  data: {},
+  data: {
+    wxmlify: null
+  },
   methods: {
     /**
      * a标签点击事件

@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "tb-tag": "../tb-tag/index"
+  }
+}

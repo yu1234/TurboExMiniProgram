@@ -31,13 +31,13 @@ export default class PopupMixin extends wepy.mixin {
   }
 
   openPopup(name) {
-    if (this.popup[name]) {
+    if (this.popup[name] !== null && this.popup[name] !== undefined) {
       this.popup[name] = true
     }
   }
 
   closePopup(name) {
-    if (this.popup[name]) {
+    if (this.popup[name] !== null && this.popup[name] !== undefined) {
       this.popup[name] = false
     }
   }

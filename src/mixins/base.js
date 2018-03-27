@@ -3,6 +3,7 @@ import wepy from 'wepy'
 export default class BaseMixin extends wepy.mixin {
   data = {
     statusBarHeight: 0,
+    sysFontSize: 16,
     mixin: 'This is mixin data.'
   }
   methods = {
@@ -17,6 +18,9 @@ export default class BaseMixin extends wepy.mixin {
   onLoad() {
     if (this.$parent.globalData.systemInfo.statusbarHeight) {
       this.statusBarHeight = this.$parent.globalData.systemInfo.statusbarHeight
+    }
+    if (this.$parent.globalData.systemInfo.fontSizeSetting) {
+      this.sysFontSize = this.$parent.globalData.systemInfo.fontSizeSetting
     }
   }
 

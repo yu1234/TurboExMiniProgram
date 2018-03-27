@@ -1,0 +1,125 @@
+<template>
+  <wxc-tab bind:tabchange="tabChange" component-id="c2" animate="{{true}}" active-text-color="#49A9F2"
+           active-line-color="#49A9F2">
+    <wxc-tab-panel wx:for="{{tabs}}" wx:for-item="tab" wx:key="{{tab.id}}" tab-index="{{index}}" component-id="c2"
+                   label="{{tab.title}}">
+      <block wx:for="{{tab.content}}" wx:key="{{item.id}}">
+        <tb-list-item has-left>
+          <view slot="left">
+            <wxc-avatar></wxc-avatar>
+          </view>
+        </tb-list-item>
+      </block>
+    </wxc-tab-panel>
+  </wxc-tab>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import BaseMixin from '../../../mixins/base'
+  import NetDiskMixin from '../../../mixins/netDisk'
+
+  export default class Selector extends wepy.page {
+    mixins = [BaseMixin, NetDiskMixin]
+    config = {
+      navigationBarTitleText: '网盘文件选择',
+      usingComponents: {
+        'wxc-flex': '../../../components/minui/wxc-flex/index',
+        'wxc-tab': '../../../components/minui/wxc-tab/index',
+        'wxc-tab-panel': '../../../components/minui/wxc-tab/panel',
+        'wxc-tab-label': '../../../components/minui/wxc-tab/label',
+        'wxc-avatar': '../../../components/minui/wxc-avatar/index',
+        'tb-list-item': '../../../components/tbui/tb-list-item/index'
+      }
+    }
+    components = {}
+    data = {
+      tabs: [
+        {
+          title: '公共',
+          content: {dirs: {}, files: []},
+          id: 'sys',
+          dirId: '0',
+          fileCallBean: 'netdisk.sys.file.getlist',
+          dirCallBean: 'netdisk.sys.dir.getsublist',
+          config: {
+            dirPidKey: 'pndid',
+            dirIdKey: 'ndid',
+            dirNameKey: 'name',
+            dirPhoto: '/assets/images/attachment_icon_folder_m_default.png'
+          }
+        },
+        {
+          title: '个人',
+          content: {dirs: {}, files: []},
+          id: 'personal',
+          dirId: '0',
+          fileCallBean: 'netdisk.personal.file.getlist',
+          dirCallBean: 'netdisk.personal.dir.getsublist',
+          config: {
+            dirPidKey: 'pndid',
+            dirIdKey: 'ndid',
+            dirNameKey: 'name',
+            dirPhoto: '/assets/images/attachment_icon_folder_m_default.png'
+          }
+        },
+        {
+          title: '群组',
+          content: {dirs: {}, files: []},
+          id: 'workgroup',
+          dirId: '0',
+          fileCallBean: 'netdisk.workgroup.file.getlist',
+          dirCallBean: 'du.workgroup.getlist',
+          config: {
+            dirPidKey: 'pndid',
+            dirIdKey: 'id',
+            dirNameKey: 'name',
+            dirPhoto: '/assets/images/group.png'
+          }
+        },
+        {
+          title: '邮件附件',
+          content: {dirs: {}, files: []},
+          id: 'attachlist',
+          dirId: '0',
+          fileCallBean: 'mail.client.getattachlist',
+          dirCallBean: null,
+          config: {
+            dirPidKey: null,
+            dirIdKey: null,
+            dirNameKey: null,
+            dirPhoto: '/assets/images/attachment_icon_folder_m_default.png'
+          }
+        },
+        {
+          title: '超大附件',
+          content: {dirs: {}, files: []},
+          id: 'largeattach',
+          dirId: '0',
+          fileCallBean: 'netdisk.largeattach.file.getlist',
+          dirCallBean: null,
+          config: {
+            dirPidKey: null,
+            dirIdKey: null,
+            dirNameKey: null,
+            dirPhoto: '/assets/images/attachment_icon_folder_m_default.png'
+          }
+        }
+      ]
+    }
+    computed = {}
+    methods = {
+
+    }
+
+    onShow() {
+    }
+
+    onLoad(param) {
+    }
+  }
+</script>
+
+<style>
+
+</style>

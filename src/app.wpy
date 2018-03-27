@@ -14,30 +14,31 @@
   setStore(store)
 
   export default class extends wepy.app {
-    constructor () {
+    constructor() {
       super()
       this.use('requestfix')
       // 拦截request请求
       this.intercept('request', {
         // 发出请求时的回调函数
-        config (p) {
+        config(p) {
           // 对所有request请求中的OBJECT参数对象统一附加时间戳属性
           p.timestamp = +new Date()
           return p
         },
         // 请求成功后的回调函数
-        success (p) {
+        success(p) {
           return p
         },
         // 请求失败后的回调函数
-        fail (p) {
+        fail(p) {
           return p
         },
         // 请求完成时的回调函数(请求成功或失败都会被执行)
-        complete (p) {
+        complete(p) {
         }
       })
     }
+
     config = {
       pages: [
         'pages/index',
@@ -49,7 +50,9 @@
         'pages/me/me',
         'pages/mail/list/mail-list',
         'pages/mail/read/read',
-        'pages/video/video'
+        'pages/mail/write/write',
+        'pages/video/video',
+        'pages/netdisk/selector/selector'
       ],
       window: {
         backgroundTextStyle: 'light',
@@ -99,7 +102,7 @@
 
 
     onLaunch() {
-     // wepy.authorize(OBJECT)
+      // wepy.authorize(OBJECT)
       const that = this
       wepy.getSystemInfo({
         success: function (res) {

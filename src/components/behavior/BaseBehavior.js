@@ -48,6 +48,11 @@ module.exports = Behavior({
           }
         }
       }
+    },
+    emit(name, params, option) {
+      let myEventDetail = params || {} // detail对象，提供给事件监听函数
+      let myEventOption = option || {} // 触发事件的选项
+      this.triggerEvent(name, myEventDetail, myEventOption)
     }
   }
 })

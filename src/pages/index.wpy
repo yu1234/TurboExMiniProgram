@@ -8,6 +8,12 @@
     <view class="flex-item">
       <button type="primary" @tap="debugTap()" size="mini">调试</button>
     </view>
+    <view style="padding: 0 .5rem">
+      <tb-input-tag title="收件人:"></tb-input-tag>
+    </view>
+    <view>
+      <tb-input title="收件人:"></tb-input>
+    </view>
   </view>
 </template>
 
@@ -19,6 +25,8 @@
     config = {
       navigationBarTitleText: 'TurboEx',
       usingComponents: {
+        'tb-input-tag': '../components/tbui/tb-input-tag/index',
+        'tb-input': '../components/tbui/tb-input/index'
       }
     }
     components = {}

@@ -1,5 +1,5 @@
 <template>
-  <view class="tb-content">
+  <view class="tb-content has-sub-header">
     <view class="tb-card" wx:if="{{cards.ml.count>0}}">
       <view class="tb-card-content">
         <wxc-flex>
