@@ -1,4 +1,7 @@
+import BaseBehavior from "../../behavior/BaseBehavior";
+
 Component({
+  behaviors: [BaseBehavior],
   options: {
     multipleSlots: true // 在组件定义时的选项中启用多slot支持
   },
@@ -58,6 +61,12 @@ Component({
       this.setData({
         avatar: '/assets/av1.png'
       })
+    },
+    load(e) {
+    },
+    rightTap(e) {
+      let params = {type: 'rightTap'}
+      this.emit('rightTap', params)
     }
   }
 })

@@ -31,7 +31,7 @@ Component({
       }
     },
     model: {
-      type: Array,
+      type: String,
       value: [],
       observer(newVal) {
         this.setData({
@@ -99,7 +99,13 @@ Component({
   },
   methods: {
     onInput(e) {
-      let params = {type: 'input', name: this.data.name, value: e.detail.value, cursor: e.detail.cursor}
+      let params = {
+        type: 'input',
+        name: this.data.name,
+        value: e.detail.value,
+        cursor: e.detail.cursor,
+        model: e.detail.value
+      }
       this.emit('input', params)
     },
     onFocus(e) {

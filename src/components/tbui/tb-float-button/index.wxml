@@ -1,1 +1,16 @@
+<view class="wux-backdrop--transparent" wx:if="{{ backdrop && opened }}"></view>
+<view class="wux-speed-dial class-name {{positionClass}} {{animateClass}} {{ opened ? 'wux-speed-dial--opened' : '' }}"
+      data-opened="{{ opened }}" bindtap="toggleTap" wx:if="{{ visible }}">
+  <view class="wux-speed-dial__action" hover-class="wux-speed-dial__action--hover">
+    <text class="wux-speed-dial__text"></text>
+  </view>
+  <view class="wux-speed-dial__buttons" wx:if="{{ buttons&&buttons.length }}">
+    <block wx:for="{{ buttons }}" wx:key="">
+      <view class="data-label wux-speed-dial__button button-class" data-index="{{ index }}" data-label="{{ item.label }}"
+            catchtap="buttonTap" hover-class="wux-speed-dial__button--hover">
+        <image class="wux-speed-dial__icon" src="{{ item.icon }}"/>
+      </view>
+    </block>
+  </view>
+</view>
 

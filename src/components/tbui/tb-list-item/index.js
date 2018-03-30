@@ -61,6 +61,10 @@ Component({
     error(e) {
       var myEventOption = {} // 触发事件的选项
       this.triggerEvent('error', e, myEventOption)
+    },
+    load(e) {
+      var myEventOption = {} // 触发事件的选项
+      this.triggerEvent('load', e, myEventOption)
     }
   },
   ready() {

@@ -20,9 +20,11 @@
             catch:tap="rightIconTap"></icon>
     </view>
   </view>
-  <view class="auto-compete-list" wx:if="{{autoCompeteShow}}">
+  <scroll-view class="auto-compete-list" wx:if="{{autoCompeteShow}}" scroll-y="{{true}}" catchscroll="autoCompeteScroll">
     <block wx:for="{{autoCompeteList}}" wx:key="{{item.id}}">
-      <view class="item" data-item="{{item}}" catchtap="autoCompeteItemTap">{{item.text}}</view>
+      <view class="item" data-item="{{item}}" catchtap="autoCompeteItemTap">
+        {{item.text}}
+      </view>
     </block>
-  </view>
+  </scroll-view>
 </view>

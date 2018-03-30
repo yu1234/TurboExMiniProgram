@@ -66,6 +66,8 @@
       <icon class="iconfont icon-nav_btn_cancel tb-nav-icon" wx:if="{{config.edit}}" @tap="exitEdit()"></icon>
     </view>
     <view slot="right">
+      <icon class="iconfont icon-nav_btn_edit_default tb-nav-icon" @tap="writeMail"
+            wx:if="{{!config.edit}}"></icon>
       <icon class="iconfont icon-nav_btn_mail_menu tb-nav-icon" @tap="openPopup('swipePanelOpen')"
             wx:if="{{!config.edit}}"></icon>
       <icon class="iconfont icon-nav_btn_cancel_check tb-nav-icon" wx:if="{{config.edit&&!isCheckAll}}"
@@ -78,9 +80,8 @@
     <tb-mail-list-item avatar="{{item.headerPhoto}}" title="{{item.title}}" subTitle="{{item.subject}}"
                        text="{{item.text}}" titleAfter="{{item.date}}" un-read="{{item.unRead}}" top="{{item.top}}"
                        has-right="{{config.edit}}" attach="{{item.hasAttach}}" backlog="{{item.backlog}}"
-                       importance="{{item.importance}}" star="{{item.star}}"
-                       wx:for="{{mails}}"
-                       wx:key="{{item.id}}" @tap="readMail({{item.id}})">
+                       importance="{{item.importance}}" star="{{item.star}}" wx:for="{{mails}}" wx:key="{{item.id}}"
+                       @tap.stop="readMail({{item.id}})">
       <tb-checkbox slot="right" value="{{item.id}}" name="selected" model="{{selected}}" color="#49A9F2"
                    bind:change="formChange"/>
     </tb-mail-list-item>
@@ -251,7 +252,6 @@
       config: {
         edit: false,
         currentTab: 'inbox',
-        pagesize: 15,
         fromindex: 0
       },
       flags: ['star', 'importance', 'backlog'],
@@ -348,6 +348,9 @@
       },
       readMail(id) {
         this.loadPage(`/pages/mail/read/read?id=${id}`)
+      },
+      writeMail() {
+        this.loadPage(`/pages/mail/write/write`)
       }
     }
 
@@ -428,7 +431,7 @@
     refreshComplete(mails1, mails2) {
       let self = this
       self.mails = self.concat([], mails1, mails2)
-      if (self.mails.length < self.config.pagesize) {
+      if (self.mails.length < self.pageSize) {
         self._loadMoreComplete(true)
       } else {
         self._loadMoreComplete(false)
@@ -443,7 +446,7 @@
 
     loadMore() {
       let self = this
-      self.config.fromindex = self.config.fromindex + self.config.pagesize
+      self.config.fromindex = self.config.fromindex + self.pageSize
       if (self.config.currentTab === 'inbox') {
         self.getMailsByFolder(self.config.currentTab, self.config.fromindex).then((inboxMail) => {
           let newInboxMail = self.filter().topMailFilter(inboxMail)
@@ -489,14 +492,15 @@
       return new Promise(function (resolve) {
         let params = {
           foldercode: folder || '',
-          pagesize: self.config.pagesize,
+          pagesize: self.pageSize,
           fromindex: fromindex || 0,
           flag: -1 // 加载所有邮件
         }
         twCallBeanPromise('mail.client.getlist_foldercode', params).then(function (ret) {
           let mails = (ret.beanparam.data && ret.beanparam.data.mails) || []
-          let mls = self.formatMails(mails)
-          resolve(mls)
+          self.formatMails(mails).then((mls) => {
+            resolve(mls)
+          })
         }).catch((e) => {
           resolve([])
         })
@@ -514,12 +518,13 @@
         let params = {
           flag: flag || -1,
           fromindex: fromindex || 0,
-          pagesize: pagesize || self.config.pagesize
+          pagesize: pagesize || self.pageSize
         }
         twCallBeanPromise('mail.client.getlist_flag', params).then(function (ret) {
           let mails = (ret.beanparam.data && ret.beanparam.data.mails) || []
-          let mls = self.formatMails(mails)
-          resolve(mls)
+          self.formatMails(mails).then((mls) => {
+            resolve(mls)
+          })
         }).catch((e) => {
           resolve([])
         })
@@ -562,74 +567,79 @@
      * @returns {Array}
      */
     formatMails(mails) {
-      let mls = []
-      if (this.isArrayNotNull(mails)) {
-        for (let i = 0, len = mails.length; i < len; i++) {
-          let mail = mails[i]
-          if (mail.mailid) {
-            let from = mail.from || {}
-            let flags = mail.flags
-            let unRead = false
-            let hasAttach = false
-            let star = false
-            let importance = false
-            let backlog = false
-            let top = false
-            if (this.isArrayNotNull(flags)) {
-              for (let i = 0, len = flags.length; i < len; i++) {
-                let flag = flags[i]
-                if (flag === '0') {
-                  unRead = true
-                }
-                if (flag === '12') {
-                  hasAttach = true
-                }
-                if (flag === '9') {
-                  star = true
-                }
-                if (flag === '15') {
-                  importance = true
-                }
-                if (flag === '11') {
-                  backlog = true
-                }
-                if (flag === '10') {
-                  top = true
+      return new Promise(resolve => {
+        let mls = []
+        let accounts = []
+        if (this.isArrayNotNull(mails)) {
+          for (let i = 0, len = mails.length; i < len; i++) {
+            let mail = mails[i]
+            if (mail.mailid) {
+              let from = mail.from || {}
+              let flags = mail.flags
+              let unRead = false
+              let hasAttach = false
+              let star = false
+              let importance = false
+              let backlog = false
+              let top = false
+              if (this.isArrayNotNull(flags)) {
+                for (let i = 0, len = flags.length; i < len; i++) {
+                  let flag = flags[i]
+                  if (flag === '0') {
+                    unRead = true
+                  }
+                  if (flag === '12') {
+                    hasAttach = true
+                  }
+                  if (flag === '9') {
+                    star = true
+                  }
+                  if (flag === '15') {
+                    importance = true
+                  }
+                  if (flag === '11') {
+                    backlog = true
+                  }
+                  if (flag === '10') {
+                    top = true
+                  }
                 }
               }
-            }
-            let headerPhoto = 'null'
-            if (mail.fromid) {
-              headerPhoto = twFormatGetFileCallBeanUri('config.user.head.get', {
-                'isattach': false,
-                id: mail.fromid
-              })
-            } else if (from.account === this.userAddress) {
-              if (this.userHeaderPhoto) {
-                headerPhoto = this.userHeaderPhoto
+              let ml = {
+                id: mail.mailid,
+                address: from.account || '',
+                title: from.name || (from.account || '暂无'),
+                subject: mail.subject,
+                fromId: mail.fromid,
+                text: mail.txtcontent || '',
+                date: parseDate(mail.rcpttime),
+                unRead: unRead,
+                hasAttach: hasAttach,
+                star: star,
+                importance: importance,
+                backlog: backlog,
+                top: top
               }
+              mls.push(ml)
+              accounts.push(ml.address)
             }
-            let ml = {
-              id: mail.mailid,
-              address: from.account || '',
-              title: from.name || (from.account || '暂无'),
-              subject: mail.subject,
-              fromId: mail.fromid,
-              text: mail.txtcontent || '',
-              date: parseDate(mail.rcpttime),
-              headerPhoto: headerPhoto,
-              unRead: unRead,
-              hasAttach: hasAttach,
-              star: star,
-              importance: importance,
-              backlog: backlog,
-              top: top
-            }
-            mls.push(ml)
           }
         }
-      }
-      return mls
+        if (this.isArrayNotNull(accounts)) {
+          this.getSysUserInfo(accounts).then(map => {
+            this.each(mls, (ml, i) => {
+              if (map[ml.address] && map[ml.address].headerPhoto) {
+                mls[i].headerPhoto = map[ml.address].headerPhoto
+              } else {
+                mls[i].headerPhoto = this.defaultHeaderPhoto
+              }
+            })
+            resolve(mls)
+          })
+        } else {
+          resolve(mls)
+        }
+      })
     }
 
     /**

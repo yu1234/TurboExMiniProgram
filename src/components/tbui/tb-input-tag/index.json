@@ -1,6 +1,7 @@
 {
   "component": true,
   "usingComponents": {
-    "tb-tag": "../tb-tag/index"
+    "tb-tag": "../tb-tag/index",
+    "wxc-elip": "../../minui/wxc-elip/index"
   }
 }

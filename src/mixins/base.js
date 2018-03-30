@@ -1,10 +1,23 @@
 import wepy from 'wepy'
+import {twCallBeanPromise, twFormatGetFileCallBeanUri} from '../utils/twmodule'
 
 export default class BaseMixin extends wepy.mixin {
   data = {
     statusBarHeight: 0,
     sysFontSize: 16,
-    mixin: 'This is mixin data.'
+    mixin: 'This is mixin data.',
+    pageSize: 20,
+    defaultHeaderPhoto: '/assets/av1.png',
+    decode: {
+      nbsp: '&nbsp;',
+      lt: '&lt;',
+      gt: '&gt;',
+      amp: '&amp;',
+      apos: '&apos;',
+      ensp: '&ensp;',
+      emsp: '&emsp;'
+
+    }
   }
   methods = {
     tap() {
@@ -109,5 +122,103 @@ export default class BaseMixin extends wepy.mixin {
     } else {
       return []
     }
+  }
+
+  getSysUserInfo(accounts) {
+    return new Promise((resolve) => {
+      if (this.isArrayNotNull(accounts)) {
+        let accountMap = {}
+        let calls = []
+        var keys = []
+        this.each(accounts, (v, i) => {
+          if (!this.$parent.globalData.sysUserMap[v] && v && v.length > 0) {
+            accountMap[v] = v
+          }
+        })
+        this.each(accountMap, function (value, key) {
+          calls.push(twCallBeanPromise('du.useraccount.getuitem', {account: value}))
+          keys.push(key)
+        })
+        if (this.isArrayNotNull(calls)) {
+          Promise.all(calls).then((rets) => {
+            if (this.isArrayNotNull(rets)) {
+              this.each(rets, (v, i) => {
+                let userObj = v.beanparam.data
+                if (userObj.id) {
+                  let src = twFormatGetFileCallBeanUri('config.user.head.get', {
+                    id: userObj.id,
+                    'isattach': false
+                  })
+                  let temp = {
+                    id: userObj.id,
+                    headerPhoto: src,
+                    name: userObj.name,
+                    accounts: userObj.accounts || []
+                  }
+                  this.$parent.globalData.sysUserMap[keys[i]] = temp
+                  this.$parent.globalData.sysUserMap[temp.id] = temp
+                }
+              })
+            }
+            resolve(this.$parent.globalData.sysUserMap)
+          })
+        } else {
+          resolve(this.$parent.globalData.sysUserMap)
+        }
+      } else {
+        resolve(this.$parent.globalData.sysUserMap)
+      }
+    })
+  }
+
+  getSysUserInfoById(ids) {
+    return new Promise((resolve) => {
+      if (this.isArrayNotNull(ids)) {
+        let accountMap = {}
+        let calls = []
+        this.each(ids, (v, i) => {
+          if (!this.$parent.globalData.sysUserMap[v] && v && v.length > 0) {
+            accountMap[v] = v
+          }
+        })
+        this.each(accountMap, function (value, key) {
+          calls.push(twCallBeanPromise('du.useraccount.getuitem', {id: value}))
+        })
+        if (this.isArrayNotNull(calls)) {
+          Promise.all(calls).then((rets) => {
+            if (this.isArrayNotNull(rets)) {
+              this.each(rets, (v, i) => {
+                let userObj = v.beanparam.data
+                if (userObj.id) {
+                  let src = twFormatGetFileCallBeanUri('config.user.head.get', {
+                    id: userObj.id,
+                    'isattach': false
+                  })
+                  let temp = {
+                    id: userObj.id,
+                    headerPhoto: src,
+                    name: userObj.name,
+                    accounts: userObj.accounts || []
+                  }
+                  this.$parent.globalData.sysUserMap[temp.id] = temp
+                  if (this.isArrayNotNull(temp.accounts)) {
+                    this.each(temp.accounts, (a, j) => {
+                      if (a && a.username && a.domain) {
+                        this.$parent.globalData.sysUserMap[`${a.username}@${a.domain}`] = temp
+                      }
+                    })
+                  }
+                }
+              })
+            }
+            resolve(this.$parent.globalData.sysUserMap)
+          })
+        } else {
+          resolve(this.$parent.globalData.sysUserMap)
+        }
+      } else {
+        resolve(this.$parent.globalData.sysUserMap)
+      }
+    })
   }
 }

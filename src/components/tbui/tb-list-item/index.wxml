@@ -1,9 +1,10 @@
-<view class="tb-item-wrapper item-class" style="user-select: none; outline: none; cursor: pointer; -webkit-appearance: none;">
+<view class="tb-item-wrapper item-class"
+      style="user-select: none; outline: none; cursor: pointer; -webkit-appearance: none;">
   <view
     class="tb-item {{hasLeft||avatar?'show-left':''}} {{hasRight?'show-right':''}} {{!hasLeft&&avatar?'has-avatar':''}}">
     <view class="blue-strip" wx:if="{{hasStrip}}"></view>
     <view class="tb-item-left" wx:if="{{hasLeft||avatar}}">
-      <wxc-avatar class="tb-avatar" src="{{avatar}}" wx:if="{{!hasLeft&&avatar}}" bind:error="error">
+      <wxc-avatar class="tb-avatar" src="{{avatar}}" wx:if="{{!hasLeft&&avatar}}" bind:error="error" bind:load="load">
       </wxc-avatar>
       <slot name="left" wx:if="{{hasLeft&&!avatar}}"></slot>
     </view>
@@ -31,10 +32,12 @@
           </view>
         </view>
       </view>
-      <div class="tb-item-text">
+      <view class="tb-item-text">
         <slot name="text" wx:if="{{!text}}"></slot>
-        <wxc-elip wx:if="{{text}}">{{text}}</wxc-elip>
-      </div>
+        <wxc-elip wx:if="{{text}}">
+          <text space="{{true}}" decode="{{true}}">{{text}}</text>
+        </wxc-elip>
+      </view>
     </view>
     <view class="tb-item-right" wx:if="{{hasRight}}">
       <slot name="right"></slot>

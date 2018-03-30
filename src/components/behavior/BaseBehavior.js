@@ -1,7 +1,10 @@
 module.exports = Behavior({
   behaviors: [],
   properties: {},
-  data: {},
+  data: {
+    animateCss: null,
+    visible: true
+  },
   methods: {
     isFunction(fn) {
       let r = false
@@ -53,6 +56,31 @@ module.exports = Behavior({
       let myEventDetail = params || {} // detail对象，提供给事件监听函数
       let myEventOption = option || {} // 触发事件的选项
       this.triggerEvent(name, myEventDetail, myEventOption)
+    },
+    /**
+     * 设置元素显示
+     */
+    setVisible() {
+      let className = `wux-animate--fade-in`
+      this.setData({
+        animateCss: className,
+        visible: true
+      })
+    },
+    /**
+     * 设置元素隐藏
+     * @param className
+     * @param timer
+     */
+    setHidden(className = `wux-animate--fade-out`, timer = 300) {
+      this.setData({
+        animateCss: className,
+      })
+      setTimeout(() => {
+        this.setData({
+          visible: false
+        })
+      }, timer)
     }
   }
 })

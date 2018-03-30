@@ -1,7 +1,7 @@
 import wepy from 'wepy'
 import {twCallBeanPromise, twFormatGetFileCallBeanUri} from '../utils/twmodule'
 import {localTempFileCache} from '../cache'
-import {defaultErrors, strFormatDate} from '../utils/utils'
+import {defaultErrors, strFormatDate, bytesToSize} from '../utils/utils'
 import BaseMixin from './base'
 
 export default class CommonMixin extends wepy.mixin {
@@ -73,7 +73,9 @@ export default class CommonMixin extends wepy.mixin {
 
   formatMailObj(mailObj) {
     return new Promise(resolve => {
+
       if (mailObj) {
+
         let from = mailObj.from || {}
         let oTos = mailObj.tos || []
         let oCcs = mailObj.ccs || []
@@ -84,19 +86,10 @@ export default class CommonMixin extends wepy.mixin {
         let contents = mailObj.contents || []
         let content = this.getMailContent(mailObj.mailid, contents) || ''
         let fullTitle = ''
-        let headerPhoto = 'null'
         if (from.name) {
           fullTitle = `${from.name}<${from.account}>`
         } else {
           fullTitle = from.account
-        }
-        if (mailObj.fromid) {
-          headerPhoto = twFormatGetFileCallBeanUri('config.user.head.get', {
-            'isattach': false,
-            id: mailObj.fromid
-          })
-        } else {
-          headerPhoto = `/assets/av1.png`
         }
         this.each(rcpttos, (v, i) => {
           rcptMap[v] = rcpts[i]
@@ -108,20 +101,26 @@ export default class CommonMixin extends wepy.mixin {
           subject: mailObj.subject,
           fromId: mailObj.fromid,
           fullTitle: fullTitle,
-          headerPhoto: headerPhoto,
           time: mailObj.rcpttime,
           formatTime: strFormatDate(mailObj.rcpttime, 'yyyy/MM/dd hh:mm'),
           contents: contents,
           content: content,
           attaches: this.attachesFormat(mailObj.attachs, mailObj.mailid)
         }
-        let calls = [this.formatMailPeople(oTos, rcptMap), this.formatMailPeople(oCcs, rcptMap), this.formatMailPeople(oBccs, rcptMap)]
-        Promise.all(calls).then((rets) => {
-          mail.tos = rets[0] ? rets[0].data : []
-          mail.tosFormatName = rets[0] ? rets[0].formatName : ''
-          mail.ccs = rets[1] ? rets[1].data : []
-          mail.bccs = rets[2] ? rets[2].data : []
-          resolve(mail)
+        this.getSysUserInfo([mail.address]).then((map) => {
+          if (map[mail.address] && map[mail.address].headerPhoto) {
+            mail.headerPhoto = map[mail.address].headerPhoto
+          } else {
+            mail.headerPhoto = this.defaultHeaderPhoto
+          }
+          let calls = [this.formatMailPeople(oTos, rcptMap), this.formatMailPeople(oCcs, rcptMap), this.formatMailPeople(oBccs, rcptMap)]
+          Promise.all(calls).then((rets) => {
+            mail.tos = rets[0] ? rets[0].data : []
+            mail.tosFormatName = rets[0] ? rets[0].formatName : ''
+            mail.ccs = rets[1] ? rets[1].data : []
+            mail.bccs = rets[2] ? rets[2].data : []
+            resolve(mail)
+          })
         })
       } else {
         resolve({})
@@ -134,6 +133,10 @@ export default class CommonMixin extends wepy.mixin {
       let ids = []
       let nTos = []
       let formatName = ''
+      let accountMap = {
+        accounts: [],
+        indexs: []
+      }
       this.each(oTos, (v, i) => {
         if (v.account) {
           if (v.account.indexOf('@') === -1) {
@@ -149,7 +152,8 @@ export default class CommonMixin extends wepy.mixin {
                 if (v.name) {
                   temp.name = v.name.replace(/"/g, '')
                 } else {
-                  temp.name = v.account
+                  accountMap.accounts.push(temp.address)
+                  accountMap.indexs.push(nTos.length)
                 }
                 temp.headerPhoto = twFormatGetFileCallBeanUri('config.user.head.get', {
                   'isattach': false,
@@ -166,30 +170,39 @@ export default class CommonMixin extends wepy.mixin {
           }
         }
       })
-      if (this.isArrayNotNull(ids)) {
-        this.getNamesBySysId(ids).then((map) => {
-          this.each(map, (v, k) => {
-            let type = this.getSysIdType(k)
-            let temp = {
-              id: k,
-              type: type,
-              name: v
+      this.getSysUserInfo(accountMap.accounts).then((map) => {
+        this.each(accountMap.accounts, (account, i) => {
+          if (map[account] && map[account].name && accountMap.indexs.length > i) {
+            if (nTos.length > accountMap.indexs[i]) {
+              nTos[accountMap.indexs[i]].name = map[account].name
             }
-            if (type === 'wg') {
-              temp.headerPhoto = '/assets/images/group.png'
-            } else if (type === 'og') {
-              temp.headerPhoto = `/assets/images/org.png`
-            } else {
-              temp.headerPhoto = `/assets/av1.png`
-            }
-            formatName += `${temp.name};`
-            nTos.push(temp)
-          })
-          resolve({data: nTos, formatName: formatName})
+          }
         })
-      } else {
-        resolve({data: nTos, formatName: formatName})
-      }
+        if (this.isArrayNotNull(ids)) {
+          this.getNamesBySysId(ids).then((map) => {
+            this.each(map, (v, k) => {
+              let type = this.getSysIdType(k)
+              let temp = {
+                id: k,
+                type: type,
+                name: v
+              }
+              if (type === 'wg') {
+                temp.headerPhoto = '/assets/images/group.png'
+              } else if (type === 'og') {
+                temp.headerPhoto = `/assets/images/org.png`
+              } else {
+                temp.headerPhoto = `/assets/av1.png`
+              }
+              formatName += `${temp.name};`
+              nTos.push(temp)
+            })
+            resolve({data: nTos, formatName: formatName})
+          })
+        } else {
+          resolve({data: nTos, formatName: formatName})
+        }
+      })
     })
   }
 
@@ -378,7 +391,7 @@ export default class CommonMixin extends wepy.mixin {
             id: attach.atid,
             name: attach.filename || '暂无',
             size: attach.len || 0,
-            formatSize: this.bytesToSize(attach.len || 0)
+            formatSize: bytesToSize(attach.len || 0)
           }
           let fileType = this.getFileType(temp.name)
           let p = {mailid: mailId, atid: attach.atid, filename: temp.name}
@@ -401,21 +414,6 @@ export default class CommonMixin extends wepy.mixin {
     } else {
       return ''
     }
-  }
-
-  /**
-   * 字节数自动转换为一个可阅读的值和单位
-   * @param bytes
-   * @returns {string}
-   */
-  bytesToSize(bytes) {
-    if (bytes === 0 || !bytes) {
-      return '0字节'
-    }
-    let k = 1024
-    let sizes = ['字节', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-    let i = Math.floor(Math.log(bytes) / Math.log(k))
-    return (bytes / Math.pow(k, i)).toPrecision(3) + sizes[i]
   }
 
   /**

@@ -9,7 +9,13 @@
         </view>
         <text>邮件</text>
       </view>
-      <view class="tb-flex-item">
+      <view class="tb-flex-item text-center" @tap="fnItemClick('netDisk')">
+        <view>
+          <wxc-avatar class="avatar">
+            <icon class="iconfont icon-function_icon_online icon"></icon>
+          </wxc-avatar>
+        </view>
+        <text>网络硬盘</text>
       </view>
       <view class="tb-flex-item">
       </view>
@@ -42,6 +48,8 @@
       fnItemClick(id) {
         if (id === 'mail') {
           this.loadPage('/pages/mail/list/mail-list')
+        } else if (id === 'netDisk') {
+          this.loadPage('/pages/netdisk/main/main')
         }
       }
     }

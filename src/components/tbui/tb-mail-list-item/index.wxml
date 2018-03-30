@@ -1,8 +1,8 @@
 <view class="tb-mail-list-item" style="{{top?' background-color: rgb(255, 253, 217);':''}}">
   <tb-list-item avatar="{{avatar}}" title="{{title}}" title-after="{{titleAfter}}"
                 sub-title="{{subTitle}}" text="{{text}}" has-strip="{{unRead}}" title-bold="{{unRead}}"
-                has-right="{{hasRight}}" bind:error="error" has-sub-title-after-slot item-class="">
-    <view slot="right">
+                has-right="{{hasRight}}" bind:error="error" bind:load="load" has-sub-title-after-slot item-class="">
+    <view slot="right" catch:tap="rightTap">
       <slot name="right"></slot>
     </view>
     <view slot="subTitleAfter">

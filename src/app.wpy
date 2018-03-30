@@ -31,6 +31,14 @@
         },
         // 请求失败后的回调函数
         fail(p) {
+          if (p.errMsg) {
+            if (p.errMsg === 'request:fail timeout') {
+              wepy.showToast({
+                title: '访问超时,请重新访问',
+                icon: 'none'
+              })
+            }
+          }
           return p
         },
         // 请求完成时的回调函数(请求成功或失败都会被执行)
@@ -46,13 +54,15 @@
         'pages/login/login',
         'pages/main/main',
         'pages/fn/fn',
-        'pages/address/address',
+        'pages/address/main/address',
+        'pages/address/selector/selector',
         'pages/me/me',
         'pages/mail/list/mail-list',
         'pages/mail/read/read',
         'pages/mail/write/write',
         'pages/video/video',
-        'pages/netdisk/selector/selector'
+        'pages/netdisk/selector/selector',
+        'pages/netdisk/main/main'
       ],
       window: {
         backgroundTextStyle: 'light',
@@ -76,7 +86,7 @@
             selectedIconPath: './assets/images/tab_icon_refresh_selected.png'
           },
           {
-            pagePath: 'pages/address/address',
+            pagePath: 'pages/address/main/address',
             text: '地址本',
             iconPath: './assets/images/tab_icon_address_book_default.png',
             selectedIconPath: './assets/images/tab_icon_address_book_selected.png'
@@ -88,7 +98,7 @@
             selectedIconPath: './assets/images/tab_icon_my_selected.png'
           }]
       },
-      debug: true,
+      debug: false,
       networkTimeout: {
         request: 12000
       }
@@ -97,16 +107,15 @@
     globalData = {
       userInfo: null,
       weUserInfo: null,
-      systemInfo: {}
+      systemInfo: {},
+      sysUserMap: {}
     }
-
 
     onLaunch() {
       // wepy.authorize(OBJECT)
       const that = this
       wepy.getSystemInfo({
         success: function (res) {
-          console.log('手机信息', res)
           if (res) {
             that.globalData.systemInfo = res
           }

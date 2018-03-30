@@ -29,24 +29,32 @@
 <template>
   <tb-nav has-right>
     <view slot="right">
-      <icon class="iconfont icon-nav_btn_send tb-nav-icon" @tap=""></icon>
+      <icon class="iconfont icon-nav_btn_send tb-nav-icon" @tap="sendMail"
+            style="color: {{canSend ?'#49A9F2;':'#ccc;'}}"></icon>
     </view>
   </tb-nav>
   <view class="tb-content has-sub-header">
     <view class="from-item">
-      <tb-input-tag  sys-font-size="{{sysFontSize}}" title="{{inputTitle.title}}"></tb-input-tag>
+      <tb-input-tag sys-font-size="{{sysFontSize}}" title="{{inputTitle.title}}" name="tos" exist-tags="{{existTags}}"
+                    bind:tagChange="tagChange" bind:onInput="inputTagChange"
+                    auto-compete-list="{{autoCompeteList}}" bind:rightIconTap="selectAddress"></tb-input-tag>
     </view>
-    <view class="from-item" wx:if="{{!showOtherInput}}" @tap="onShowOtherInput">
+    <view class="from-item" wx:if="{{!showOtherInput}}" @tap="onShowOtherInput" style="min-height: 1.5rem">
       <text style="color: #49a9f2">抄送/密送</text>
     </view>
     <view class="from-item" wx:if="{{showOtherInput}}">
-      <tb-input-tag  sys-font-size="{{sysFontSize}}"  title="{{inputTitle.title1}}"></tb-input-tag>
+      <tb-input-tag sys-font-size="{{sysFontSize}}" title="{{inputTitle.title1}}" name="ccs"
+                    bind:tagChange="tagChange" exist-tags="{{existTags}}" bind:onInput="inputTagChange"
+                    auto-compete-list="{{autoCompeteList}}" bind:rightIconTap="selectAddress"></tb-input-tag>
     </view>
     <view class="from-item" wx:if="{{showOtherInput}}">
-      <tb-input-tag   sys-font-size="{{sysFontSize}}"  title="{{inputTitle.title2}}"></tb-input-tag>
+      <tb-input-tag sys-font-size="{{sysFontSize}}" title="{{inputTitle.title2}}" name="bccs"
+                    bind:tagChange="tagChange" exist-tags="{{existTags}}" bind:onInput="inputTagChange"
+                    auto-compete-list="{{autoCompeteList}}" bind:rightIconTap="selectAddress"></tb-input-tag>
     </view>
     <view class="from-item">
-      <tb-input  title="{{inputTitle.title2}}" has-right>
+      <tb-input title="{{inputTitle.title3}}" model="{{mail.subject}}" name="mail.subject" bind:input="formChange"
+                has-right>
         <view slot="right">
           <icon class="iconfont icon-compose_mail_btn_add" style="color: rgb(255, 195, 0);font-size: 1rem"
                 @tap.stop="chooseUploadAttach"></icon>
@@ -69,7 +77,7 @@
       </block>
     </view>
     <view class="from-item">
-      <textarea style="width: 100%;" maxlength="{{-1}}"></textarea>
+      <textarea style="width: 100%;" maxlength="{{-1}}" bindinput="mailContentChange"></textarea>
     </view>
   </view>
   <!--上传附件弹出层-->
@@ -110,9 +118,11 @@
   import wepy from 'wepy'
   import BaseMixin from '../../../mixins/base'
   import PopupMixin from '../../../mixins/popup'
+  import FromMixin from '../../../mixins/form'
+  import {sendMail, twCallBeanPromise, uploadFile} from '../../../utils/twmodule'
 
   export default class Write extends wepy.page {
-    mixins = [BaseMixin, PopupMixin]
+    mixins = [BaseMixin, PopupMixin, FromMixin]
     config = {
       navigationBarTitleText: '写邮件',
       usingComponents: {
@@ -127,6 +137,9 @@
     }
     components = {}
     data = {
+      canSend: false,
+      autoCompeteList: [],
+      existTags: [],
       inputTitle: {
         title: '收件人:',
         title1: '抄&emsp;送:',
@@ -138,10 +151,42 @@
         attachPopupOpen: false
       },
       mail: {
+        foldercode: 'send', // 保存在已发送
+        from: null,
+        tos: [],
+        ccs: [],
+        bccs: [],
+        sendtime: null,
+        neednotification: false,
+        sendsingle: false,
+        stationery: null,
+        priority: null,
+        importance: null,
+        sec_class: null,
+        subject: null,
+        date: null,
+        contents: [{
+          'content-type': 'text/html',
+          content: ''
+        }],
         attachs: []
       }
     }
     computed = {}
+    watch = {
+      mail(newVal) {
+        if (newVal) {
+          if (this.isArrayNotNull(newVal.tos)) {
+            this.canSend = true
+            this.$apply()
+          } else {
+            this.canSend = false
+          }
+        } else {
+          this.canSend = false
+        }
+      }
+    }
     methods = {
       onShowOtherInput() {
         this.showOtherInput = true
@@ -150,9 +195,15 @@
         this.openPopup('attachPopupOpen')
       },
       chooseImage() {
+        let self = this
         wepy.chooseImage({
           success(res) {
-
+            console.log('chooseImage:', res)
+            if (self.isArrayNotNull(res.tempFilePaths)) {
+              let file = res.tempFiles[0]
+              let formData = {size: file.size}
+              uploadFile(res.tempFilePaths[0], formData)
+            }
           },
           fail(res) {
 
@@ -162,7 +213,10 @@
       chooseVideo() {
         wepy.chooseVideo({
           success(res) {
+            console.log('chooseVideo:', res)
+            if (this.isArrayNotNull(res.tempFilePaths)) {
 
+            }
           },
           fail(res) {
 
@@ -171,6 +225,70 @@
       },
       chooseFileByNetDisk() {
         this.loadPage('/pages/netdisk/selector/selector?selector=uploadFile')
+      },
+      tagChange(e) {
+        let name = e.detail.name
+        let tags = e.detail.tags
+        let addresses = []
+        if (this.isArrayNotNull(tags)) {
+          this.each(tags, (v, i) => {
+            if (v && v.id) {
+              addresses.push(v.id)
+            }
+          })
+        }
+        if (name === 'tos') {
+          this.mail.tos = addresses
+        } else if (name === 'ccs') {
+          this.mail.ccs = addresses
+        } else if (name === 'bccs') {
+          this.mail.bccs = addresses
+        }
+        this.existTags = this.concat([], this.mail.tos, this.mail.ccs, this.mail.bccs)
+      },
+      mailContentChange(e) {
+        let v = e.detail.value
+        v = v.replace(/\n/g, '<br/>')
+        this.mail.contents[0].content = `<div>${v}</div>`
+      },
+      sendMail() {
+        if (!this.canSend) {
+          wepy.showToast({
+            title: '请填写收件人再发送',
+            icon: 'none'
+          })
+          return
+        }
+        wepy.showLoading({
+          title: '邮件发送中...'
+        })
+        let userInfo = this.$parent.globalData.userInfo
+        let params = {sendAndSave: true, maxRcpts: userInfo.maxRcpts, sendMailMaxSize: userInfo.sendMailMaxSize}
+        if (userInfo.address) {
+          this.mail.from = userInfo.address
+        }
+        sendMail(this.mail, params).then((result) => {
+          wepy.hideLoading()
+          wepy.showToast({
+            title: '邮件发送成功'
+          })
+        }).catch((e) => {
+          wepy.hideLoading()
+          wepy.showToast({
+            title: e.message,
+            icon: 'none'
+          })
+        })
+      },
+      inputTagChange(e) {
+        let value = e.detail.value
+        this.autoCompeteItem(value)
+      },
+      selectAddress(e) {
+        let name = e.detail.name
+        if (name) {
+          this.loadPage(`/pages/address/selector/selector?selector=${name}`)
+        }
       }
     }
 
@@ -179,7 +297,39 @@
 
     onLoad() {
     }
+
+    /**
+     * 邮件地址提示
+     * @param val
+     */
+    autoCompeteItem(val) {
+      // 获取补全内容
+      this.autoCompeteList = []
+      if (val && val.trim().length >= 2) {
+        val = val.toLowerCase()
+        twCallBeanPromise('address.util.ac', {'keyword': val}).then((ret) => {
+          if (this.isArrayNotNull(ret.beanparam.data.list)) {
+            let tempArr = []
+            this.each(ret.beanparam.data.list, (v, i) => {
+              if (v.account) {
+                let temp = {
+                  id: v.account
+                }
+                if (v.nickname) {
+                  temp.text = v.nickname + '<' + v.account + '>'
+                } else {
+                  temp.text = v.account
+                }
+                if (tempArr.length <= 10) {
+                  tempArr.push(temp)
+                }
+              }
+            })
+            this.autoCompeteList = tempArr
+            this.$apply()
+          }
+        })
+      }
+    }
   }
 </script>
-
-

@@ -14,6 +14,7 @@
   "author": "yu <836986488@qq.com>",
   "license": "MIT",
   "dependencies": {
+    "@minui/wxc-dialog": "^1.0.8",
     "@minui/wxc-icon": "^1.0.8",
     "redux": "^3.7.2",
     "redux-actions": "^2.2.1",

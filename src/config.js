@@ -1,8 +1,8 @@
 /**
  * 小程序配置文件
  */
-//let host = 'http://192.168.191.1:8080/TurboWebApp'
-let host = 'http://mail.turbopush.cn:8080'
+let host = 'http://192.168.191.1:8080/TurboWebApp'
+// let host = 'http://mail.turbopush.cn:8080'
 let sessionId = null
 let wid = null
 const miniProgram = {
@@ -29,7 +29,7 @@ let config = {
     // 测试的请求地址，用于测试会话
     requestUrl: `${host}/weapp/user`,
     // 上传图片接口
-    uploadUrl: `${host}/weapp/upload`,
+    uploadUrl: `${host}/fileupload`,
     // 获取openId地址
     openIdUrl: `https://api.weixin.qq.com/sns/jscode2session`,
     accessTokenUrl: `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${miniProgram.appId}&secret=${miniProgram.appSecret}`,

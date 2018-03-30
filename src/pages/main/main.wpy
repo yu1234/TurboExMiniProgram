@@ -1,5 +1,5 @@
 <template>
-  <view class="tb-content has-sub-header">
+  <view class="tb-content" style="top:.5rem;">
     <view class="tb-card" wx:if="{{cards.ml.count>0}}">
       <view class="tb-card-content">
         <wxc-flex>
@@ -29,6 +29,7 @@
       </view>
     </view>
   </view>
+  <tb-float-button buttons="{{buttons}}" position="bottomRight" bind:buttonTap="menuTap"></tb-float-button>
 </template>
 
 <script>
@@ -48,13 +49,21 @@
         'tb-popup': '../../components/tbui/tb-popup/index',
         'wxc-elip': '../../components/minui/wxc-elip/index',
         'wxc-avatar': '../../components/minui/wxc-avatar/index',
-        'tb-nav': '../../components/tbui/tb-nav/index'
+        'tb-nav': '../../components/tbui/tb-nav/index',
+        'tb-float-button': '../../components/tbui/tb-float-button/index'
       }
     }
     components = {}
     data = {
+      buttons: [
+        {label: '写邮件', icon: '/assets/images/newmenu_icon_mail_default.png', id: 'writeMail'},
+        {label: '新建日程', icon: '/assets/images/newmenu_icon_calendar_default.png', id: 'newSchedule'},
+        {label: '新建联系人', icon: '/assets/images/newmenu_icon_linkman_default.png', id: 'newAddress'}
+      ],
       fnPopupId: 'fnPopup',
-      userInfo: {},
+      userInfo: {
+        quota: {}
+      },
       cards: {
         ml: {
           icon: '', // 图标样式
@@ -66,7 +75,15 @@
       }
     }
     computed = {}
-    methods = {}
+    methods = {
+      menuTap(e) {
+        let button = e.detail.button
+        let index = e.detail.index
+        if (button && button.id === 'writeMail') {
+          this.loadPage('/pages/mail/write/write')
+        }
+      }
+    }
     events = {}
 
     onLoad() {
@@ -172,7 +189,19 @@
       }).then(function (ret) {
         if (ret.beanparam.data) {
           var quota = ret.beanparam.data.quota
-          self.userInfo.quota = quota || 0
+          self.userInfo.quota.maxMailboxSize = quota || -1
+        }
+        return twCallBeanPromise('quota.user.sendmail_max_size.get', {'id': self.userInfo.uid})
+      }).then(function (ret) {
+        if (ret.beanparam.data) {
+          var quota = ret.beanparam.data.quota
+          self.userInfo.quota.sendMailMaxSize = quota || -1
+        }
+        return twCallBeanPromise('quota.user.max_rcpts.get', {'id': self.userInfo.uid})
+      }).then(function (ret) {
+        if (ret.beanparam.data) {
+          var quota = ret.beanparam.data.quota
+          self.userInfo.quota.maxRcpts = quota || -1
         }
         return twCallBeanPromise('config.user.head.get', {})
       }).then(function (ret) {
@@ -183,6 +212,9 @@
           self.userInfo.headPhoto = src
         }
         self.$parent.globalData.userInfo = self.userInfo
+        if (self.userInfo.address) {
+          self.getSysUserInfo([self.userInfo.address])
+        }
       })
     }
 

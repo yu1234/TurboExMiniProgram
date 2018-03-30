@@ -8,7 +8,9 @@ var _Event = require('./Event.js');
 
 var _Event2 = _interopRequireDefault(_Event);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) {
+  return obj && obj.__esModule ? obj : {default: obj};
+}
 
 exports.default = Component({
   options: {
@@ -53,7 +55,8 @@ exports.default = Component({
     tabs: [],
     width: 0,
     activeKey: 0,
-    move: 0
+    move: 0,
+    tabHeight: 0
   },
   attached: function attached() {
     var _this = this;
@@ -79,6 +82,11 @@ exports.default = Component({
       type: this.type,
       move: width * activeKey
     });
+    wx.createSelectorQuery().in(this).select('.tab__navbar-wrap').fields({size: true}, (res) => {
+      this.setData({
+        tabHeight: res.height
+      })
+    }).exec();
   },
   detached: function detached() {
     _Event2.default.removeListener();

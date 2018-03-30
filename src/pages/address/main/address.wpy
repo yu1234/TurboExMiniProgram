@@ -1,0 +1,173 @@
+<template>
+  <wxc-tab bind:tabchange="tabChange" active-text-color="#49A9F2" active-line-color="#49A9F2" animate="{{true}}"
+           full-screen
+           component-id="c1" default-inde="{{6}}">
+    <wxc-tab-panel wx:for="{{tabs}}" wx:for-item="tab" wx:key="{{tab.id}}" tab-index="{{index}}" component-id="c1"
+                   label="{{tab.title}}">
+      <tb-list-item has-left @tap.stop="" wx:if="{{tab.dirsHistory.length>1}}" sub-title="返回上一级"
+                    sub-title-class="subTitle" @tap.stop="backAddressFolderTap">
+        <view slot="left">
+          <wxc-avatar class="avatar" mold="square" src="{{addressMixin.backIcon}}"></wxc-avatar>
+        </view>
+      </tb-list-item>
+      <block wx:for="{{tab.content.dirs[tab.dirId]}}" wx:key="{{item.id}}">
+        <tb-list-item has-left title="{{item.name}}" @tap.stop="enterAddressFolderTap({{item.id}})">
+          <view slot="left">
+            <wxc-avatar class="avatar" mold="square" src="{{item.icon}}"></wxc-avatar>
+          </view>
+        </tb-list-item>
+      </block>
+      <block wx:for="{{tab.content.files}}" wx:key="{{item.id}}">
+        <tb-list-item has-left title="{{item.name}}" text="{{item.emailsFormat}}">
+          <view slot="left">
+            <wxc-avatar class="avatar" src="{{item.headerPhoto}}"></wxc-avatar>
+          </view>
+        </tb-list-item>
+      </block>
+      <tb-loading-more loading wx:if="{{!noMoreDate}}"></tb-loading-more>
+    </wxc-tab-panel>
+  </wxc-tab>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import BaseMixin from '../../../mixins/base'
+  import AddressMixin from '../../../mixins/address'
+  import PullDownRefreshMixin from '../../../mixins/pullDownRefresh'
+  import LoadMoreMixin from '../../../mixins/loadMore'
+
+  export default class AddressMain extends wepy.page {
+    mixins = [BaseMixin, AddressMixin, PullDownRefreshMixin, LoadMoreMixin]
+    config = {
+      navigationBarTitleText: '地址本',
+      usingComponents: {
+        'wxc-flex': '../../../components/minui/wxc-flex/index',
+        'wxc-tab': '../../../components/minui/wxc-tab/index',
+        'wxc-tab-panel': '../../../components/minui/wxc-tab/panel',
+        'wxc-tab-label': '../../../components/minui/wxc-tab/label',
+        'wxc-avatar': '../../../components/minui/wxc-avatar/index',
+        'tb-loading-more': '../../../components/tbui/tb-load-more/index',
+        'tb-list-item': '../../../components/tbui/tb-list-item/index'
+      },
+      enablePullDownRefresh: true,
+      backgroundTextStyle: `dark`
+    }
+    components = {}
+    data = {
+      currentTabIndex: 0,
+      tabs: [
+        {
+          title: '常用',
+          content: {dirs: {}, files: []},
+          id: 'common',
+          dirId: '0',
+          fromIndex: 0,
+          fileCallBean: 'address.common.item.getlist',
+          dirCallBean: null,
+          dirsHistory: ['0'],
+          config: {
+            dirPidKey: null,
+            dirIdKey: null,
+            dirNameKey: null,
+            dirPhoto: null,
+            dirObjKey: null,
+            fileObjKey: 'addresses',
+            fileIdKey: 'id'
+          }
+        },
+        {
+          title: '企业',
+          content: {dirs: {}, files: []},
+          id: 'org',
+          dirId: '0',
+          fromIndex: 0,
+          fileCallBean: 'du.org.getduruitems',
+          dirCallBean: 'du.org.getsubditems_visitor',
+          dirsHistory: ['0'],
+          config: {
+            dirPidKey: 'id',
+            dirIdKey: 'id',
+            dirNameKey: 'name',
+            dirPhoto: '/assets/images/org.png',
+            dirObjKey: '_list',
+            fileObjKey: 'uitems',
+            fileIdKey: 'id'
+          }
+        },
+        {
+          title: '个人',
+          content: {dirs: {}, files: []},
+          id: 'personal',
+          dirId: '0',
+          fromIndex: 0,
+          fileCallBean: 'address.personal.item.getlist',
+          dirCallBean: 'address.personal.node.getsublist',
+          dirsHistory: ['0'],
+          config: {
+            dirPidKey: 'id',
+            dirIdKey: 'id',
+            dirNameKey: 'name',
+            dirPhoto: '/assets/images/attachment_icon_folder_m_default.png',
+            dirObjKey: '_list',
+            fileObjKey: '_list',
+            fileIdKey: 'id'
+          }
+        },
+        {
+          title: '群组',
+          content: {dirs: {}, files: []},
+          id: 'workgroup',
+          dirId: '0',
+          fromIndex: 0,
+          fileCallBean: 'du.workgroup.getdur',
+          dirCallBean: 'du.workgroup.getlist',
+          dirsHistory: ['0'],
+          config: {
+            dirPidKey: 'id',
+            dirIdKey: 'id',
+            dirNameKey: 'name',
+            dirPhoto: '/assets/images/group.png',
+            dirObjKey: '_list',
+            fileObjKey: 'uitems',
+            fileIdKey: 'id'
+          }
+        },
+        {
+          title: '公共',
+          content: {dirs: {}, files: []},
+          id: 'sys',
+          dirId: '0',
+          fromIndex: 0,
+          fileCallBean: 'address.sys.item.getlist',
+          dirCallBean: 'address.sys.node.getsublist',
+          dirsHistory: ['0'],
+          config: {
+            dirPidKey: 'id',
+            dirIdKey: 'id',
+            dirNameKey: 'name',
+            dirPhoto: '/assets/images/attachment_icon_folder_m_default.png',
+            dirObjKey: '_list',
+            fileObjKey: '_list',
+            fileIdKey: 'id'
+          }
+        }
+      ]
+    }
+    computed = {}
+    methods = {}
+
+    onShow() {
+    }
+
+    onLoad() {
+    }
+  }
+</script>
+
+<style>
+  .avatar {
+    display: block;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+</style>

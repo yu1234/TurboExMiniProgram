@@ -6,8 +6,17 @@ export default class FromMixin extends wepy.mixin {
   data = {}
   methods = {
     formChange(e) {
-      if (e.detail.name && this[e.detail.name]) {
-        this[e.detail.name] = e.detail.model
+      let name = e.detail.name
+      let value = e.detail.model
+      if (name) {
+        let keys = name.split('.')
+        if (keys.length === 1) {
+          this[keys[0]] = value
+        } else if (keys.length === 2) {
+          if (this[keys[0]]) {
+            this[keys[0]][keys[1]] = value
+          }
+        }
       }
     }
   }

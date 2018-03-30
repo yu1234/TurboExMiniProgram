@@ -16,7 +16,14 @@ Component({
     },
     autoCompeteList: {
       type: Array,
-      value: []
+      value: [],
+      observer(newVal) {
+        if (this.data.inputFocus && newVal.length > 0) {
+          this.setData({
+            'autoCompeteShow': true
+          })
+        }
+      }
     },
     title: {
       type: String,
@@ -33,49 +40,60 @@ Component({
     inputBlur: true,
     inputValue: '',
     inputMaxValue: 80,
-    inputWidth: 20,
-    autoCompeteShow: false
+    inputWidth: 16,
+    autoCompeteShow: false,
+    autoCompeteSave: false
   },
   methods: {
     autoCompeteItemTap(e) {
       let item = e.target.dataset.item
       this.setTag(item.id, item.text)
       this.setData({
-        'autoCompeteShow': false
+        'autoCompeteShow': false,
+        'inputValue': ''
       })
     },
+    autoCompeteScroll() {
+      this.data.autoCompeteSave = true
+    },
     onFocus() {
-      console.log('onFocus')
       this.setData({
         'inputFocus': true,
         'inputBlur': false
       })
+      this.setInputWidth()
     },
     onBlur() {
-      if (this.data.inputValue) {
-        this.setTag(this.data.inputValue, this.data.inputValue)
-      }
+      console.log('onBlur')
       this.setData({
         'inputBlur': true,
-        'inputFocus': false,
-        'inputValue': '',
-        'autoCompeteShow': false
+        'inputFocus': false
       })
+      setTimeout(() => {
+        if (this.data.autoCompeteSave) {
+          this.setData({
+            'autoCompeteSave': false
+          })
+        } else {
+          if (this.data.inputValue && this.data.inputValue.trim().length > 0) {
+            this.setTag(this.data.inputValue, this.data.inputValue)
+          }
+          this.setData({
+            'autoCompeteShow': false,
+            'inputValue': ''
+          })
+        }
+        this.setInputWidth(1)
+      }, 350)
     },
     onInput(e) {
       this.setInputWidth()
       let inputValue = e.detail.value
       let params = {type: 'onInput', name: this.data.name, value: inputValue}
       this.emit('onInput', params)
-      let autoCompeteList = this.data.autoCompeteList
       this.setData({
         'inputValue': inputValue
       })
-      if (inputValue && inputValue.length >= 2 && autoCompeteList.length > 0) {
-        this.setData({
-          'autoCompeteShow': true
-        })
-      }
     },
     setTag(id, text) {
       let isPass = this.validator(id, text)
@@ -88,34 +106,48 @@ Component({
         'inputFocus': false,
         tags: tags
       })
+      let params = {type: 'tagChange', name: this.data.name, tags: tags}
+      this.setInputWidth()
+      this.emit('tagChange', params)
     },
-    setInputWidth() {
-      let query = wx.createSelectorQuery().in(this)
-      query.select('.input-tag .input .content .text .tag-input').fields({
-        dataset: true,
-        size: true,
-        scrollOffset: true,
-        properties: ['value']
-      })
-      query.exec((res) => {
-        if (res && res.length > 0 && res[0]) {
-          let inputNode = res[0]
-
-          let inputNodeValue = inputNode.value || ''
-          if (inputNodeValue && this.data.sysFontSize) {
-            let inputW = (inputNodeValue.length + 2) * this.data.sysFontSize
-            if (inputW > this.data.inputMaxValue) {
+    setInputWidth(w) {
+      if (w != null && w !== undefined) {
+        this.setData({
+          inputWidth: w
+        })
+      } else {
+        let query = wx.createSelectorQuery().in(this)
+        query.select('.input-tag .input .content .text .tag-input').fields({
+          dataset: true,
+          size: true,
+          scrollOffset: true,
+          properties: ['value']
+        })
+        query.exec((res) => {
+          if (res && res.length > 0 && res[0]) {
+            let inputNode = res[0]
+            let inputNodeValue = inputNode.value
+            if (!inputNodeValue) {
               this.setData({
-                inputWidth: this.data.inputMaxValue
+                inputWidth: this.data.sysFontSize
               })
-            } else {
-              this.setData({
-                inputWidth: inputW
-              })
+              return
+            }
+            if (this.data.sysFontSize) {
+              let inputW = (inputNodeValue.length + 2) * this.data.sysFontSize
+              if (inputW > this.data.inputMaxValue) {
+                this.setData({
+                  inputWidth: this.data.inputMaxValue
+                })
+              } else {
+                this.setData({
+                  inputWidth: parseInt(inputW) || this.data.sysFontSize
+                })
+              }
             }
           }
-        }
-      })
+        })
+      }
     },
     validator(id, text) {
       if (id) {

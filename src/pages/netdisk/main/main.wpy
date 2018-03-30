@@ -47,7 +47,7 @@
   import PullDownRefreshMixin from '../../../mixins/pullDownRefresh'
   import LoadMoreMixin from '../../../mixins/loadMore'
 
-  export default class NetDiskSelector extends wepy.page {
+  export default class NetDiskMain extends wepy.page {
     mixins = [BaseMixin, NetDiskMixin, CommonMixin, PullDownRefreshMixin, LoadMoreMixin]
     config = {
       navigationBarTitleText: '网盘文件选择',
@@ -169,6 +169,5 @@
 
     onLoad(param) {
     }
-
   }
 </script>

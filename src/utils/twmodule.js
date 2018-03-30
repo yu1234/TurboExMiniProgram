@@ -89,8 +89,10 @@ let twmodule = {
         },
         fail: function (errMsg) {
           if (errMsg) {
-            let error = new Error(errMsg.errMsg)
-            reject(error)
+            if (errMsg.errMsg !== 'request:fail timeout') {
+              let error = new Error(errMsg.errMsg)
+              reject(error)
+            }
           } else {
             reject(defaultErrors.networkError)
           }
@@ -111,6 +113,173 @@ let twmodule = {
     }
     let src = `${service.host}/getfile?file=${g}&_isattach=${isAttach || false}&_binindex=${_binindex}&ts=${twCurrentMills()}&wid=${getWid()}&_sessionid=${getSessionId()}&a=f.${filetype}`
     return src
+  },
+  /**
+   * 验证callbean 是否添加权限
+   */
+  checkHasPermit(beanid, params, okText, cancelText) {
+    return new Promise(function (resolve, reject) {
+      let beansno = ''
+      twmodule.twCallBeanPromise(beanid, params, 'getbeansno').then((ret) => {
+        beansno = ret.beanparam.data.sno
+        return twmodule.twCallBeanPromise('accessright.callbean.permit.password.isexist', {
+          beanid: beanid,
+          beansno: beansno
+        })
+      }).then((ret) => {
+        let isexist = ret.beanparam.data.isexist;
+        if (isexist) {
+          resolve(true)
+        } else {
+          resolve(false)
+        }
+      })
+    })
+  },
+  /**
+   * 邮件发送
+   * @param sendMail
+   * @param params
+   */
+  sendMail(sendMail, params) {
+    return new Promise(function (resolve, reject) {
+      if (sendMail) {
+        params = params || {}
+        // 配额查询确认
+        let sendAndSave = params.sendAndSave || true
+        let maxRcpts = params.maxRcpts || -1
+        let sendMailMaxSize = params.sendMailMaxSize || -1
+
+        sendMail.mailid ? sendMail.mailid = sendMail.mailid : void(0);
+        sendMail.foldercode = 'send';// 保存在已发送
+        if (!sendMail.tos || sendMail.tos.length <= 0) {
+          reject(defaultErrors.customError('请填写收件人后再发送'));
+          return
+        }
+        // check 'max_rcpts'
+        if (maxRcpts > 0) {
+          let sum = 0
+          sum += sendMail.tos ? sendMail.tos.length : 0
+          sum += sendMail.ccs ? sendMail.ccs.length : 0
+          sum += sendMail.bccs ? sendMail.bccs.length : 0
+          if (sum > maxRcpts) {
+            reject(defaultErrors.customError('收件人数量限制'))
+            return
+          }
+        }
+        // check 'sendmail_max_size'
+        if (sendMail.attachs && sendMail.attachs.length > 0 && sendMailMaxSize > 0) {
+          var sum = 0
+          for (let i = 0, len = sendMail.attachs.length; i < len; i++) {
+            let at = sendMail.attachs[i];
+            if (at.file.indexOf('$$temp$') !== 0) continue
+            sum += parseInt(at.filesize)
+          }
+          let sumM = Math.floor(sum / 1024 / 1024)
+          if (sendMailMaxSize <= sumM) {
+            reject(defaultErrors.customError('发送邮件大小限制：' + sendMailMaxSize + 'M'))
+            return
+          }
+        }
+        // 其他属性处理
+        // 时间点 定时发送，如果有，则用指定时间点进行发送
+        // 其他属性处理
+        // 时间点 定时发送，如果有，则用指定时间点进行发送
+        sendMail.sendtime = sendMail.sendtime ? sendMail.sendtime : void(0)
+        // false/true 是否需要回执
+        sendMail.neednotification = sendMail.neednotification ? sendMail.neednotification : void(0)
+        // false/true  是否用群发单显
+        sendMail.sendsingle = sendMail.sendsingle ? sendMail.sendsingle : void(0)
+        // 信纸编号
+        sendMail.stationery = sendMail.stationery ? sendMail.stationery : void(0)
+        // 优先级(紧急为 1) 可以不填，不填表示不设定
+        sendMail.priority = sendMail.priority ? sendMail.priority : void(0)
+        // high 重要度（high为重要）可以不填
+        sendMail.importance = sendMail.importance ? sendMail.importance : void(0)
+        // 安全邮件
+        sendMail.sec_class = sendMail.sec_class ? sendMail.sec_class : void(0)
+
+        let callbean = sendAndSave ? 'mail.client.sendandsave' : 'mail.client.send'
+        if (!sendMail.subject) {
+          wx.showModal({
+            title: '提示',
+            content: '您的邮件没有填写主题,您确定继续发送?',
+            success(res) {
+              if (res.confirm) {
+                twmodule.twCallBeanPromise(callbean, sendMail).then((ret) => {
+                  if (ret) {
+                    if (ret.beanparam.retcode === 0) {
+                      var result = {}
+                      ret.beanparam.data.mailid ? result.mailid = ret.beanparam.data.mailid : void(0)
+                      ret.beanparam.data.prid ? result.prid = ret.beanparam.data.prid : void(0)
+                      resolve(result)
+                    } else {
+                      reject(defaultErrors.customError(ret.beanparam.retdesc))
+                    }
+                  } else {
+                    reject(defaultErrors.customError('连接不到服务器'))
+                  }
+                })['catch'](function (e) {
+                  reject(defaultErrors.customError('邮件发送失败'))
+                })
+              } else if (res.cancel) {
+              }
+            }
+          })
+        } else {
+          twmodule.twCallBeanPromise(callbean, sendMail).then((ret) => {
+            if (ret) {
+              if (ret.beanparam.retcode === 0) {
+                var result = {}
+                ret.beanparam.data.mailid ? result.mailid = ret.beanparam.data.mailid : void(0)
+                ret.beanparam.data.prid ? result.prid = ret.beanparam.data.prid : void(0)
+                resolve(result)
+              } else {
+                reject(ret.beanparam.retdesc)
+              }
+            } else {
+              reject(defaultErrors.customError('连接不到服务器'))
+            }
+          })['catch'](function (e) {
+            reject(defaultErrors.customError('邮件发送失败'))
+          })
+        }
+      } else {
+        reject(defaultErrors.networkError)
+      }
+    })
+  },
+  /**
+   * 文件上传
+   */
+  uploadFile(filePath, formData) {
+    if (filePath) {
+      formData = formData || {}
+      formData.wid = getWid()
+      let name = filePath.substring(filePath.lastIndexOf('/') + 1, filePath.length).toLowerCase() || ''
+      formData.name = name
+      formData.id = twCurrentMills()
+      let url = service.uploadUrl + '?'
+      Object.keys(formData).map(key => {
+        url += encodeURIComponent(key) + '=' + encodeURIComponent(formData[key]) + '&'
+      })
+      let params = {
+        filePath: filePath,
+        name: 'file',
+        url: url,
+        header: {'content-type': 'application/octet-stream'},
+        success(res) {
+          console.log('uploadFile.success', res)
+        },
+        fail(res) {
+          console.log('uploadFile.fail', res)
+        },
+        complete() {
+        }
+
+      }
+      wepy.uploadFile(params)
+    }
   }
 }
 
@@ -186,6 +355,12 @@ function filterContents(cmd, params, contents) {
     retContents.push(retO)
   }
   return retContents
+}
+
+function promiseNext(ret) {
+  return new Promise(function (resolve, reject) {
+    resolve(ret);
+  });
 }
 
 module.exports = twmodule

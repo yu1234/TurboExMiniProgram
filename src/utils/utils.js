@@ -152,6 +152,20 @@ let utils = {
   strFormatDate(dataStr, fmt) {
     var date = utils.strToDate(dataStr)
     return utils.formatDate(date, fmt)
+  },
+  /**
+   * 字节数自动转换为一个可阅读的值和单位
+   * @param bytes
+   * @returns {string}
+   */
+  bytesToSize(bytes) {
+    if (bytes === 0 || !bytes) {
+      return '0字节'
+    }
+    let k = 1024
+    let sizes = ['字节', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+    let i = Math.floor(Math.log(bytes) / Math.log(k))
+    return (bytes / Math.pow(k, i)).toPrecision(3) + sizes[i]
   }
 }
 module.exports = utils
