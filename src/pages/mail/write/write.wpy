@@ -36,19 +36,19 @@
   <view class="tb-content has-sub-header">
     <view class="from-item">
       <tb-input-tag sys-font-size="{{sysFontSize}}" title="{{inputTitle.title}}" name="tos" exist-tags="{{existTags}}"
-                    bind:tagChange="tagChange" bind:onInput="inputTagChange"
+                    bind:tagChange="tagChange" bind:onInput="inputTagChange" id="tos"
                     auto-compete-list="{{autoCompeteList}}" bind:rightIconTap="selectAddress"></tb-input-tag>
     </view>
     <view class="from-item" wx:if="{{!showOtherInput}}" @tap="onShowOtherInput" style="min-height: 1.5rem">
       <text style="color: #49a9f2">抄送/密送</text>
     </view>
     <view class="from-item" wx:if="{{showOtherInput}}">
-      <tb-input-tag sys-font-size="{{sysFontSize}}" title="{{inputTitle.title1}}" name="ccs"
+      <tb-input-tag sys-font-size="{{sysFontSize}}" title="{{inputTitle.title1}}" name="ccs" id="ccs"
                     bind:tagChange="tagChange" exist-tags="{{existTags}}" bind:onInput="inputTagChange"
                     auto-compete-list="{{autoCompeteList}}" bind:rightIconTap="selectAddress"></tb-input-tag>
     </view>
     <view class="from-item" wx:if="{{showOtherInput}}">
-      <tb-input-tag sys-font-size="{{sysFontSize}}" title="{{inputTitle.title2}}" name="bccs"
+      <tb-input-tag sys-font-size="{{sysFontSize}}" title="{{inputTitle.title2}}" name="bccs" id="bccs"
                     bind:tagChange="tagChange" exist-tags="{{existTags}}" bind:onInput="inputTagChange"
                     auto-compete-list="{{autoCompeteList}}" bind:rightIconTap="selectAddress"></tb-input-tag>
     </view>
@@ -61,9 +61,12 @@
         </view>
       </tb-input>
     </view>
+    <view class="from-item">
+      <textarea style="width: 100%;" maxlength="{{-1}}" bindinput="mailContentChange"></textarea>
+    </view>
     <view style="padding: 0 .5rem .2rem .5rem" class="attaches" wx:if="{{mail.attachs&&mail.attachs.length}}">
       <block wx:for="{{mail.attachs}}" wx:key="{{item.id}}">
-        <tb-list-item item-class="item" title="{{item.name}}" text="{{item.formatSize}}" has-left has-right
+        <tb-list-item item-class="item" title="{{item.filename}}" text="{{item.formatSize}}" has-left has-right
                       @tap.stop="attachItemTap('item',{{item}})">
           <view style="height: 2.5rem" slot="left">
             <wxc-avatar class="tb-head-avatar" mold="square" src="{{item.icon}}">
@@ -75,9 +78,6 @@
           </view>
         </tb-list-item>
       </block>
-    </view>
-    <view class="from-item">
-      <textarea style="width: 100%;" maxlength="{{-1}}" bindinput="mailContentChange"></textarea>
     </view>
   </view>
   <!--上传附件弹出层-->
@@ -119,10 +119,14 @@
   import BaseMixin from '../../../mixins/base'
   import PopupMixin from '../../../mixins/popup'
   import FromMixin from '../../../mixins/form'
-  import {sendMail, twCallBeanPromise, uploadFile} from '../../../utils/twmodule'
+  import UploadFileMixin from '../../../mixins/uploadFile'
+  import {sendMail, twCallBeanPromise} from '../../../utils/twmodule'
+  import {bytesToSize, getPhotoByFileType} from '../../../utils/utils'
+  import {getWid} from '../../../config'
+  import onfire from '../../../utils/onfire.min'
 
   export default class Write extends wepy.page {
-    mixins = [BaseMixin, PopupMixin, FromMixin]
+    mixins = [BaseMixin, PopupMixin, FromMixin, UploadFileMixin]
     config = {
       navigationBarTitleText: '写邮件',
       usingComponents: {
@@ -170,7 +174,8 @@
           content: ''
         }],
         attachs: []
-      }
+      },
+      attachesMap: {}
     }
     computed = {}
     watch = {
@@ -198,33 +203,61 @@
         let self = this
         wepy.chooseImage({
           success(res) {
-            console.log('chooseImage:', res)
-            if (self.isArrayNotNull(res.tempFilePaths)) {
-              let file = res.tempFiles[0]
-              let formData = {size: file.size}
-              uploadFile(res.tempFilePaths[0], formData)
+            if (res && self.isArrayNotNull(res.tempFilePaths)) {
+              self.commonUploadFile(res.tempFilePaths).then((ures) => {
+                console.log('upload.success', ures)
+                self.each(ures, (file, i) => {
+                  if (res.tempFiles && res.tempFiles.length > file.index) {
+                    ures[i].size = (res.tempFiles[file.index].size || 0)
+                  } else {
+                    ures[i].size = 0
+                  }
+                  ures[i].icon = getPhotoByFileType('jpg')
+                })
+                self.addAttaches(ures, 'upload')
+              }).catch((e) => {
+                console.log('upload.fail', e)
+              })
+            } else {
+              wepy.showToast({title: `请选择图片`, icon: 'none'})
             }
           },
           fail(res) {
-
+            wepy.showToast({title: `图片选择失败,请重新选择`, icon: 'none'})
           }
         })
       },
       chooseVideo() {
+        let self = this
         wepy.chooseVideo({
           success(res) {
             console.log('chooseVideo:', res)
-            if (this.isArrayNotNull(res.tempFilePaths)) {
-
+            if (res && res.tempFilePath) {
+              self.commonUploadFile([res.tempFilePath]).then((ures) => {
+                console.log('upload.success', ures)
+                self.each(ures, (file, i) => {
+                  if (res.tempFiles && res.tempFiles.length > file.index) {
+                    ures[i].size = (res.tempFilePath.size || 0)
+                  } else {
+                    ures[i].size = 0
+                  }
+                  ures[i].icon = getPhotoByFileType('mp4')
+                })
+                self.addAttaches(ures, 'upload')
+              }).catch((e) => {
+                console.log('upload.fail', e)
+              })
+            } else {
+              wepy.showToast({title: `请选择视频`, icon: 'none'})
             }
           },
           fail(res) {
-
+            wepy.showToast({title: `视频选择失败,请重新选择`, icon: 'none'})
           }
         })
       },
       chooseFileByNetDisk() {
-        this.loadPage('/pages/netdisk/selector/selector?selector=uploadFile')
+        this.loadPage(`/pages/netdisk/selector/selector?selector=uploadFile&page=write`)
       },
       tagChange(e) {
         let name = e.detail.name
@@ -252,6 +285,7 @@
         this.mail.contents[0].content = `<div>${v}</div>`
       },
       sendMail() {
+        let self = this
         if (!this.canSend) {
           wepy.showToast({
             title: '请填写收件人再发送',
@@ -270,7 +304,12 @@
         sendMail(this.mail, params).then((result) => {
           wepy.hideLoading()
           wepy.showToast({
-            title: '邮件发送成功'
+            title: '邮件发送成功',
+            complete() {
+              setTimeout(() => {
+                self.backPage()
+              }, 1000)
+            }
           })
         }).catch((e) => {
           wepy.hideLoading()
@@ -287,15 +326,37 @@
       selectAddress(e) {
         let name = e.detail.name
         if (name) {
-          this.loadPage(`/pages/address/selector/selector?selector=${name}`)
+          this.loadPage(`/pages/address/selector/selector?selector=${name}&&page=write`)
         }
       }
     }
 
     onShow() {
+      console.log('write.onSHow')
     }
 
     onLoad() {
+      this.subscription()
+    }
+
+    onUnload(e) {
+      onfire.un('netDiskSelector')
+      onfire.un('addressSelector')
+    }
+
+    subscription() {
+      let netDiskSelector = onfire.on('netDiskSelector', (option) => {
+        if (option && option.selector === 'uploadFile' && option.page === 'write' && option.action === 'ok' && this.isArrayNotNull(option.data)) {
+          this.addAttaches(option.data, 'netDisk')
+        }
+      })
+      let addressSelector = onfire.on('addressSelector', (option) => {
+        if (option && option.page === 'write' && option.action === 'ok' && this.isArrayNotNull(option.data)) {
+          console.log(option)
+          this.setAddress(option.data, option.selector)
+        }
+      })
+      return [netDiskSelector, addressSelector]
     }
 
     /**
@@ -329,6 +390,70 @@
             this.$apply()
           }
         })
+      }
+    }
+
+    /**
+     * 添加附件
+     */
+    addAttaches(files, from) {
+      if (files && files.length > 0) {
+        this.each(files, (file, index) => {
+          if (file.id && !this.attachesMap[file.id]) {
+            var o = {id: file.id}
+            o.filename = file.name || ''
+            o.filesize = parseInt((file.size || 0))
+            o.formatSize = bytesToSize(o.filesize)
+            var filetype = o.filename.substring(o.filename.lastIndexOf('.') + 1, o.filename.length)
+            if (from === 'netDisk') {
+              file.id.indexOf('_at_') !== -1 ? o.file = ['$$callbean$mail.client.getattach$', JSON.stringify({
+                mailid: file.mailId || '',
+                atid: file.id
+              }), '$', filetype, '$$'].join('') : file.id.indexOf('_nf_') !== -1 ? o.file = ['$$callbean$netdisk.file.get$', JSON.stringify({nfid: file.id}), '$', filetype, '$$'].join('') : void(0)
+              o.icon = getPhotoByFileType(filetype)
+            } else if (from === 'upload') {
+              o.file = ['$$temp$', file.id, '$', filetype, '$$', '&wid=', getWid()].join('')
+              o.icon = file.icon || getPhotoByFileType()
+            } else if (from === 'mailAttach') {
+              o.file = file.resourceid
+            }
+            this.mail.attachs.push(o)
+            this.attachesMap[file.id] = true
+            this.$apply()
+          }
+        })
+      }
+    }
+
+    /**
+     * 添加地址
+     */
+    setAddress(data, type) {
+      if (!type) {
+        return
+      }
+      let component = this.$wxpage.selectComponent(`#${type}`)
+      if (component && component.setTag) {
+        if (this.isArrayNotNull(data)) {
+          this.each(data, (ad, i) => {
+            let id = ''
+            let text = ''
+            if (ad.type === 'address') {
+              if (this.isArrayNotNull(ad.emails) && ad.emails[0].address) {
+                id = ad.emails[0].address
+                text = `${id}`
+                if (ad.name) {
+                  text = `${ad.name}<${id}>`
+                }
+              }
+            } else if (ad.type === 'dir') {
+              id = ad.id
+              text = ad.name
+            }
+            component.setTag(id, text)
+
+          })
+        }
       }
     }
   }

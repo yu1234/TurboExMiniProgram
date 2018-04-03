@@ -39,7 +39,7 @@
         </wxc-elip>
       </view>
     </view>
-    <view class="tb-item-right" wx:if="{{hasRight}}">
+    <view class="tb-item-right right-class" wx:if="{{hasRight}}">
       <slot name="right"></slot>
     </view>
   </view>

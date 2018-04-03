@@ -5,7 +5,7 @@
     height: 2.5rem;
   }
 
-  . subTitle {
+  .subTitle {
     color: #49a9f2;
   }
 </style>

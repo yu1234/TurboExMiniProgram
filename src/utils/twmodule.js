@@ -235,7 +235,7 @@ let twmodule = {
                 ret.beanparam.data.prid ? result.prid = ret.beanparam.data.prid : void(0)
                 resolve(result)
               } else {
-                reject(ret.beanparam.retdesc)
+                reject(defaultErrors.customError(ret.beanparam.retdesc))
               }
             } else {
               reject(defaultErrors.customError('连接不到服务器'))
@@ -252,33 +252,135 @@ let twmodule = {
   /**
    * 文件上传
    */
-  uploadFile(filePath, formData) {
+  uploadFile(filePath, formData, callbackObj) {
     if (filePath) {
+      let sessionId = getSessionId()
+      let wid = getWid()
       formData = formData || {}
-      formData.wid = getWid()
-      let name = filePath.substring(filePath.lastIndexOf('/') + 1, filePath.length).toLowerCase() || ''
-      formData.name = name
-      formData.id = twCurrentMills()
-      let url = service.uploadUrl + '?'
+      formData.wid = wid
+      // 获取文件名
+      let fileName = filePath.substring(filePath.lastIndexOf('/') + 1, filePath.length) || filePath
+      let arr = searchSubStr(fileName, '.')
+      if (arr && arr.length > 1) {
+        let tfileName = fileName.substring(arr[arr.length - 2] + 1, fileName.length)
+        if (tfileName) {
+          fileName = tfileName
+        }
+      }
+      formData.name = fileName
+      formData.id = `wexin${twCurrentMills()}`
+      let url = service.uploadUrl + '?uploadType=wexin&'
       Object.keys(formData).map(key => {
         url += encodeURIComponent(key) + '=' + encodeURIComponent(formData[key]) + '&'
       })
+      let cookie = ''
+      if (wid) {
+        cookie += `tw${wid}=${sessionId};`
+      }
       let params = {
         filePath: filePath,
         name: 'file',
         url: url,
-        header: {'content-type': 'application/octet-stream'},
+        header: {'Content-Type': 'application/octet-stream', 'Cookie': cookie},
         success(res) {
-          console.log('uploadFile.success', res)
+          if (callbackObj && callbackObj.success && callbackObj.success instanceof Function) {
+            res = res || {}
+            if (res.data) {
+              try {
+                let json = JSON.parse(res.data)
+                if (json.id && json.id.length > 0) {
+                  res.id = json.id[0]
+                  res.src = json.src && json.src.length > 0 ? json.src[0] : ''
+                  res.name = fileName
+                  callbackObj.success(res)
+                } else {
+                  if (callbackObj && callbackObj.fail && callbackObj.fail instanceof Function) {
+                    callbackObj.fail(res)
+                  }
+                }
+              } catch (e) {
+                if (callbackObj && callbackObj.fail && callbackObj.fail instanceof Function) {
+                  callbackObj.fail(res)
+                }
+              }
+            }
+          }
         },
         fail(res) {
           console.log('uploadFile.fail', res)
+          if (callbackObj && callbackObj.fail && callbackObj.fail instanceof Function) {
+            callbackObj.fail(res)
+          }
         },
         complete() {
+          if (callbackObj && callbackObj.complete && callbackObj.complete instanceof Function) {
+            callbackObj.complete()
+          }
         }
 
       }
-      wepy.uploadFile(params)
+      let uploadTask = wepy.uploadFile(params)
+      uploadTask.onProgressUpdate((res) => {
+        if (callbackObj && callbackObj.uploadTask && callbackObj.uploadTask instanceof Function) {
+          callbackObj.uploadTask(res)
+        }
+      })
+    }
+  },
+  /**
+   * 多文件上传
+   */
+  uploadFiles(filePaths, formData, callbackObj) {
+    if (filePaths && filePaths.length > 0) {
+      let i = 0
+      let len = filePaths.length
+      let callbackObjs = {
+        success(res) {
+          if (callbackObj && callbackObj.success && callbackObj.success instanceof Function) {
+            res = res || {}
+            res.index = i
+            callbackObj.success(res)
+          }
+        },
+        fail(res) {
+          if (callbackObj && callbackObj.fail && callbackObj.fail instanceof Function) {
+            res = res || {}
+            res.index = i
+            callbackObj.fail(res)
+          }
+        },
+        complete() {
+          if (callbackObj && callbackObj.complete && callbackObj.complete instanceof Function) {
+            let res = {}
+            res.index = i
+            callbackObj.complete(res)
+          }
+          i++
+          if (i < len) {
+            if (callbackObj && callbackObj.beforeUpload && callbackObj.beforeUpload instanceof Function) {
+              let res = {}
+              res.filePath = filePaths[i]
+              res.index = i
+              callbackObj.beforeUpload(res)
+            }
+            twmodule.uploadFile(filePaths[i], formData, callbackObjs)
+          }
+        },
+        uploadTask(res) {
+          if (callbackObj && callbackObj.uploadTask && callbackObj.uploadTask instanceof Function) {
+            res = res || {}
+            res.index = i
+            callbackObj.uploadTask(res)
+          }
+        }
+      }
+      if (callbackObj && callbackObj.beforeUpload && callbackObj.beforeUpload instanceof Function) {
+        let res = {}
+        res.filePath = filePaths[i]
+        res.index = i
+        callbackObj.beforeUpload(res)
+      }
+      twmodule.uploadFile(filePaths[i], formData, callbackObjs)
     }
   }
 }
@@ -357,10 +459,14 @@ function filterContents(cmd, params, contents) {
   return retContents
 }
 
-function promiseNext(ret) {
-  return new Promise(function (resolve, reject) {
-    resolve(ret);
-  });
+function searchSubStr(str, subStr) {
+  let positions = []
+  let pos = str.indexOf(subStr)
+  while (pos > -1) {
+    positions.push(pos)
+    pos = str.indexOf(subStr, pos + 1)
+  }
+  return positions
 }
 
 module.exports = twmodule

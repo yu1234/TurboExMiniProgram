@@ -78,7 +78,6 @@
     methods = {
       menuTap(e) {
         let button = e.detail.button
-        let index = e.detail.index
         if (button && button.id === 'writeMail') {
           this.loadPage('/pages/mail/write/write')
         }

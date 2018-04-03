@@ -1,5 +1,5 @@
 <view class="wux-backdrop--transparent" wx:if="{{ backdrop && opened }}"></view>
-<view class="wux-speed-dial class-name {{positionClass}} {{animateClass}} {{ opened ? 'wux-speed-dial--opened' : '' }}"
+<view class="wux-speed-dial  {{positionClass}} {{animateClass}} {{ opened ? 'wux-speed-dial--opened' : '' }} class-name"
       data-opened="{{ opened }}" bindtap="toggleTap" wx:if="{{ visible }}">
   <view class="wux-speed-dial__action" hover-class="wux-speed-dial__action--hover">
     <text class="wux-speed-dial__text"></text>
@@ -8,7 +8,8 @@
     <block wx:for="{{ buttons }}" wx:key="">
       <view class="data-label wux-speed-dial__button button-class" data-index="{{ index }}" data-label="{{ item.label }}"
             catchtap="buttonTap" hover-class="wux-speed-dial__button--hover">
-        <image class="wux-speed-dial__icon" src="{{ item.icon }}"/>
+        <image class="wux-speed-dial__icon" src="{{ item.icon }}" wx:if="{{!item.fontIcon}}"/>
+        <icon  class="wux-speed-dial__fontIcon iconfont {{ item.icon }}" wx:if="{{item.fontIcon}}"/>
       </view>
     </block>
   </view>

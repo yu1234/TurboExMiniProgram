@@ -11,22 +11,52 @@
         </view>
       </tb-list-item>
       <block wx:for="{{tab.content.dirs[tab.dirId]}}" wx:key="{{item.id}}">
-        <tb-list-item has-left title="{{item.name}}" @tap.stop="enterAddressFolderTap({{item.id}})">
+        <tb-list-item has-left has-right="{{(tab.id==='org'||tab.id==='workgroup')}}" title="{{item.name}}"
+                      @tap.stop="enterAddressFolderTap({{item.id}})">
           <view slot="left">
             <wxc-avatar class="avatar" mold="square" src="{{item.icon}}"></wxc-avatar>
+          </view>
+          <view slot="right" catch:tap="rightTap" wx:if="{{(tab.id==='org'||tab.id==='workgroup')}}">
+            <tb-checkbox name="addressSelected" model="{{addressSelected}}" value="{{item}}" color="#49A9F2"
+                         bind:change="formChange"/>
           </view>
         </tb-list-item>
       </block>
       <block wx:for="{{tab.content.files}}" wx:key="{{item.id}}">
-        <tb-list-item has-left title="{{item.name}}" text="{{item.emailsFormat}}">
+        <tb-list-item has-left has-right title="{{item.name}}" text="{{item.emailsFormat}}"
+                      @tap.stop="fileItemTap({{item}})">
           <view slot="left">
             <wxc-avatar class="avatar" src="{{item.headerPhoto}}"></wxc-avatar>
+          </view>
+          <view slot="right" catch:tap="rightTap">
+            <tb-checkbox name="addressSelected" model="{{addressSelected}}"
+                         value="{{item}}" color="#49A9F2"
+                         bind:change="formChange" wx:if="{{item.emails&&item.emails.length===1}}"/>
+            <icon class="iconfont icon-list_icon_more_defau" wx:if="{{item.emails&&item.emails.length>1}}"
+                  @tap.stop="multiAddressTap({{item}})"/>
           </view>
         </tb-list-item>
       </block>
       <tb-loading-more loading wx:if="{{!noMoreDate}}"></tb-loading-more>
     </wxc-tab-panel>
   </wxc-tab>
+  <tb-float-button buttons="{{floatButton}}" position="bottomRight" class-name="float-button"
+                   bind:buttonTap="floatButtonTap"></tb-float-button>
+  <tb-popup open="{{popup.multiPopupOpen}}" name="multiPopupOpen" bind:show="popupChange"
+            bind:hide="popupChange">
+    <view class="multiPopup">
+      <block wx:for="{{multiAddressList}}" wx:key="{{item.address}}">
+        <wxc-flex cross="center">
+          <view class="item tb-flex-item">{{item.address}}</view>
+          <view class="item tb-flex-item text-right">
+            <tb-checkbox name="addressSelected" model="{{addressSelected}}"
+                         value="{{item}}" color="#49A9F2"
+                         bind:change="formChange"/>
+          </view>
+        </wxc-flex>
+      </block>
+    </view>
+  </tb-popup>
 </template>
 
 <script>
@@ -35,9 +65,12 @@
   import AddressMixin from '../../../mixins/address'
   import PullDownRefreshMixin from '../../../mixins/pullDownRefresh'
   import LoadMoreMixin from '../../../mixins/loadMore'
+  import FormMixin from '../../../mixins/form'
+  import PopupMixin from '../../../mixins/popup'
+  import onfire from '../../../utils/onfire.min'
 
   export default class AddressSelector extends wepy.page {
-    mixins = [BaseMixin, AddressMixin, PullDownRefreshMixin, LoadMoreMixin]
+    mixins = [BaseMixin, AddressMixin, PullDownRefreshMixin, LoadMoreMixin, FormMixin, PopupMixin]
     config = {
       navigationBarTitleText: '邮件地址选择',
       usingComponents: {
@@ -47,7 +80,10 @@
         'wxc-tab-label': '../../../components/minui/wxc-tab/label',
         'wxc-avatar': '../../../components/minui/wxc-avatar/index',
         'tb-loading-more': '../../../components/tbui/tb-load-more/index',
-        'tb-list-item': '../../../components/tbui/tb-list-item/index'
+        'tb-list-item': '../../../components/tbui/tb-list-item/index',
+        'tb-checkbox': '../../../components/tbui/tb-checkbox/index',
+        'tb-float-button': '../../../components/tbui/tb-float-button/index',
+        'tb-popup': '../../../components/tbui/tb-popup/index'
       },
       enablePullDownRefresh: true,
       backgroundTextStyle: `dark`
@@ -151,23 +187,136 @@
             fileIdKey: 'id'
           }
         }
-      ]
+      ],
+      addressSelected: [],
+      floatButton: [
+        {
+          id: 'ok',
+          label: '确定选中',
+          icon: 'icon-nav_btn_ok_default',
+          fontIcon: true
+        },
+        {
+          id: 'search',
+          label: '搜索',
+          icon: 'icon-nav_btn_search_defau',
+          fontIcon: true
+        },
+        {
+          id: 'cancel',
+          label: '取消',
+          icon: 'icon-nav_btn_cancel_defau',
+          fontIcon: true
+        }
+      ],
+      params: {
+        selector: null,
+        page: null
+      },
+      popup: {
+        multiPopupOpen: false
+      },
+      multiAddressList: []
     }
     computed = {}
-    methods = {}
+    methods = {
+      rightTap() {
+      },
+      fileItemTap(item) {
+        if (!item || !item.id) {
+          return
+        }
+        if (this.addressSelected) {
+          let check = false
+          let index = -1
+          this.each(this.addressSelected, (s, i) => {
+            if (s && s.id === item.id) {
+              check = true
+              index = i
+            }
+          })
+          if (check) {
+            this.addressSelected.splice(index, 1)
+          } else {
+            this.addressSelected.push(item)
+          }
+        } else {
+          this.addressSelected = [item]
+        }
+      },
+      floatButtonTap(e) {
+        let button = e.detail.button
+        if (!button) {
+          return
+        }
+        if (button.id === 'ok') {
+          let data = {
+            selector: this.params.selector,
+            page: this.params.page,
+            action: 'ok',
+            data: this.addressSelected
+          }
+          onfire.fire('addressSelector', data)
+          this.backPage()
+        } else if (button.id === 'cancel') {
+          this.backPage()
+        } else if (button.id === 'search') {
+
+        }
+      },
+      multiAddressTap(item) {
+        if (item && this.isArrayNotNull(item.emails)) {
+          this.multiAddressList = []
+          this.each(item.emails, (e, i) => {
+            let temp = Object.assign({}, item)
+            temp.emails = [e]
+            temp.address = e.address
+            this.multiAddressList.push(temp)
+          })
+          this.openPopup('multiPopupOpen')
+        }
+      }
+    }
 
     onShow() {
     }
 
-    onLoad() {
+    onLoad(params) {
+      if (params) {
+        if (params.selector) {
+          this.params.selector = params.selector
+        }
+        if (params.page) {
+          this.params.page = params.page
+        }
+      }
     }
   }
 </script>
 
-<style>
+<style lang="less">
   .avatar {
     display: block;
     width: 2.5rem;
     height: 2.5rem;
   }
+
+  .subTitle {
+    color: #49a9f2;
+  }
+
+  .float-button {
+    right: 30px !important;
+  }
+
+  .multiPopup {
+    max-height: 25rem;
+    max-width: 15rem;
+    min-width: 12rem;
+    padding: .5rem;
+    .item {
+      padding: .3rem;
+    }
+  }
+
 </style>

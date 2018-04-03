@@ -100,15 +100,17 @@ Component({
       if (isPass !== true) {
         return
       }
-      let tags = this.data.tags
-      tags.push({id: id, text: text})
-      this.setData({
-        'inputFocus': false,
-        tags: tags
-      })
-      let params = {type: 'tagChange', name: this.data.name, tags: tags}
-      this.setInputWidth()
-      this.emit('tagChange', params)
+      if (id && text) {
+        let tags = this.data.tags
+        tags.push({id: id, text: text})
+        this.setData({
+          'inputFocus': false,
+          tags: tags
+        })
+        let params = {type: 'tagChange', name: this.data.name, tags: tags}
+        this.setInputWidth()
+        this.emit('tagChange', params)
+      }
     },
     setInputWidth(w) {
       if (w != null && w !== undefined) {

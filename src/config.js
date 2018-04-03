@@ -1,8 +1,8 @@
 /**
  * 小程序配置文件
  */
-let host = 'http://192.168.191.1:8080/TurboWebApp'
-// let host = 'http://mail.turbopush.cn:8080'
+// let host = 'http://192.168.191.1:8080/TurboWebApp'
+let host = 'http://mail.turbopush.cn:8080'
 let sessionId = null
 let wid = null
 const miniProgram = {

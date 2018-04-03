@@ -209,9 +209,8 @@
 
 <script>
   import wepy from 'wepy'
-  import {twCallBeanPromise, twFormatGetFileCallBeanUri} from '../../../utils/twmodule'
+  import {twCallBeanPromise} from '../../../utils/twmodule'
   import {parseDate} from '../../../utils/utils'
-  import {service} from '../../../config'
   import BaseMixin from '../../../mixins/base'
   import PullDownRefreshMixin from '../../../mixins/pullDownRefresh'
   import LoadMoreMixin from '../../../mixins/loadMore'

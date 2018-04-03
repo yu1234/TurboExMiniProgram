@@ -1,6 +1,6 @@
 import wepy from 'wepy'
 import {twCallBeanPromise} from '../utils/twmodule'
-import {bytesToSize, strFormatDate} from '../utils/utils'
+import {bytesToSize, strFormatDate, getPhotoByFileType} from '../utils/utils'
 
 export default class NetDiskMixin extends wepy.mixin {
   data = {
@@ -118,7 +118,6 @@ export default class NetDiskMixin extends wepy.mixin {
           twCallBeanPromise(callBean, params).then((ret) => {
             let dirs = ret.beanparam.data[tab.config.dirObjKey || 'dirs'] || []
             let r = this.formatNetDiskDir(dirs, tab)
-            console.log(r)
             resolve(r)
           })
         } else {
@@ -140,6 +139,7 @@ export default class NetDiskMixin extends wepy.mixin {
       this.each(srcDir, (dir, i) => {
         if (dir[tab.config.dirIdKey || 'id']) {
           let temp = {
+            type: 'dir',
             id: dir[tab.config.dirIdKey || 'id'],
             icon: tab.config.dirPhoto,
             name: dir[tab.config.dirNameKey || 'name'] || '无名称'
@@ -196,14 +196,16 @@ export default class NetDiskMixin extends wepy.mixin {
         if (tab.id === 'attachlist') {
           if (file.attach && file.attach[tab.config.fileIdKey]) {
             let temp = {
+              type: 'file',
               size: file.attach.len || 0,
               formatSize: bytesToSize(file.attach.len || 0),
               id: file.attach[tab.config.fileIdKey],
-              name: file.attach.filename || '无名字'
+              name: file.attach.filename || '无名字',
+              mailId: file.mailid
             }
             if (temp.name) {
               let fileType = this.getFileType(temp.name)
-              temp.icon = this.getPhotoByFileType(fileType)
+              temp.icon = getPhotoByFileType(fileType)
             }
             if (file.modifytime) {
               temp.date = strFormatDate(file.modifytime, 'yyyy-MM-dd hh:mm')
@@ -213,6 +215,7 @@ export default class NetDiskMixin extends wepy.mixin {
         } else {
           if (file[tab.config.fileIdKey]) {
             let temp = {
+              type: 'file',
               size: file.filesize || 0,
               formatSize: bytesToSize(file.filesize || 0),
               id: file[tab.config.fileIdKey],
@@ -220,7 +223,7 @@ export default class NetDiskMixin extends wepy.mixin {
             }
             if (temp.name) {
               let fileType = this.getFileType(temp.name)
-              temp.icon = this.getPhotoByFileType(fileType)
+              temp.icon = getPhotoByFileType(fileType)
             }
             if (file.modifytime) {
               temp.date = strFormatDate(file.modifytime, 'yyyy-MM-dd hh:mm')

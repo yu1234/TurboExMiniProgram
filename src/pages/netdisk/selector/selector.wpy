@@ -1,12 +1,16 @@
-<style>
+<style lang="less">
   .avatar {
     display: block;
     width: 2.5rem;
     height: 2.5rem;
   }
 
-  . subTitle {
+  .subTitle {
     color: #49a9f2;
+  }
+
+  .float-button {
+    right: 30px !important;
   }
 </style>
 <template>
@@ -28,15 +32,22 @@
         </tb-list-item>
       </block>
       <block wx:for="{{tab.content.files}}" wx:key="{{item.id}}">
-        <tb-list-item has-left title="{{item.name}}" text="{{item.formatSize}}{{decode.emsp}}{{item.date}}">
+        <tb-list-item has-left has-right title="{{item.name}}" text="{{item.formatSize}}{{decode.emsp}}{{item.date}}"
+                      @tap.stop="fileItemTap({{item}})">
           <view slot="left">
             <wxc-avatar class="avatar" mold="square" src="{{item.icon}}"></wxc-avatar>
+          </view>
+          <view slot="right"  catch:tap="rightTap">
+            <tb-checkbox name="netDiskSelected" model="{{netDiskSelected}}" value="{{item}}" color="#49A9F2"
+                         bind:change="formChange"/>
           </view>
         </tb-list-item>
       </block>
       <tb-loading-more loading wx:if="{{!noMoreDate}}"></tb-loading-more>
     </wxc-tab-panel>
   </wxc-tab>
+  <tb-float-button buttons="{{floatButton}}" position="bottomRight" class-name="float-button"
+                   bind:buttonTap="floatButtonTap"></tb-float-button>
 </template>
 
 <script>
@@ -46,9 +57,11 @@
   import CommonMixin from '../../../mixins/common'
   import PullDownRefreshMixin from '../../../mixins/pullDownRefresh'
   import LoadMoreMixin from '../../../mixins/loadMore'
+  import FormMixin from '../../../mixins/form'
+  import onfire from '../../../utils/onfire.min'
 
   export default class NetDiskSelector extends wepy.page {
-    mixins = [BaseMixin, NetDiskMixin, CommonMixin, PullDownRefreshMixin, LoadMoreMixin]
+    mixins = [BaseMixin, NetDiskMixin, CommonMixin, PullDownRefreshMixin, LoadMoreMixin, FormMixin]
     config = {
       navigationBarTitleText: '网盘文件选择',
       usingComponents: {
@@ -58,7 +71,9 @@
         'wxc-tab-label': '../../../components/minui/wxc-tab/label',
         'wxc-avatar': '../../../components/minui/wxc-avatar/index',
         'tb-loading-more': '../../../components/tbui/tb-load-more/index',
-        'tb-list-item': '../../../components/tbui/tb-list-item/index'
+        'tb-list-item': '../../../components/tbui/tb-list-item/index',
+        'tb-checkbox': '../../../components/tbui/tb-checkbox/index',
+        'tb-float-button': '../../../components/tbui/tb-float-button/index'
       },
       enablePullDownRefresh: true,
       backgroundTextStyle: `dark`
@@ -159,16 +174,98 @@
             fileIdKey: 'nfid'
           }
         }
-      ]
+      ],
+      netDiskSelected: [],
+      floatButton: [
+        {
+          id: 'ok',
+          label: '确定选中',
+          icon: 'icon-nav_btn_ok_default',
+          fontIcon: true
+        },
+        {
+          id: 'search',
+          label: '搜索',
+          icon: 'icon-nav_btn_search_defau',
+          fontIcon: true
+        },
+        {
+          id: 'cancel',
+          label: '取消',
+          icon: 'icon-nav_btn_cancel_defau',
+          fontIcon: true
+        }
+      ],
+      params: {
+        selector: null,
+        page: null
+      }
     }
     computed = {}
-    methods = {}
+    watch = {
+      netDiskSelected(newVal) {
+        console.log('netDiskSelected', newVal)
+      }
+    }
+    methods = {
+      rightTap() {
+      },
+      fileItemTap(item) {
+        if (!item || !item.id) {
+          return
+        }
+        if (this.netDiskSelected) {
+          let check = false
+          let index = -1
+          this.each(this.netDiskSelected, (s, i) => {
+            if (s && s.id === item.id) {
+              check = true
+              index = i
+            }
+          })
+          if (check) {
+            this.netDiskSelected.splice(index, 1)
+          } else {
+            this.netDiskSelected.push(item)
+          }
+        } else {
+          this.netDiskSelected = [item]
+        }
+      },
+      floatButtonTap(e) {
+        let button = e.detail.button
+        if (!button) {
+          return
+        }
+        if (button.id === 'ok') {
+          let data = {
+            selector: this.params.selector,
+            page: this.params.page,
+            action: 'ok',
+            data: this.netDiskSelected
+          }
+          onfire.fire('netDiskSelector', data)
+          this.backPage()
+        } else if (button.id === 'cancel') {
+          this.backPage()
+        } else if (button.id === 'search') {
+
+        }
+      }
+    }
 
     onShow() {
     }
 
-    onLoad(param) {
+    onLoad(params) {
+      if (params) {
+        if (params.selector) {
+          this.params.selector = params.selector
+        }
+        if (params.page) {
+          this.params.page = params.page
+        }
+      }
     }
-
   }
 </script>

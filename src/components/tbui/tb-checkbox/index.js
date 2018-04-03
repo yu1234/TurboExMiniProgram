@@ -8,10 +8,6 @@ Component({
       type: String,
       value: ''
     },
-    value: {
-      type: String,
-      value: null
-    },
     disabled: {
       type: Boolean,
       value: false
@@ -34,19 +30,64 @@ Component({
       value: null
     },
     model: {
-      type: Array,
+      type: null,
       value: [],
       observer(newVal) {
         this.setData({
           '_model': newVal
         })
-        if (this.isArray(this.data._model)) {
+        if (newVal && this.isArray(newVal)) {
           let checked = false
-          this.each(this.data._model, (v, i) => {
-            if (v === this.data.value) {
+          this.each(newVal, (v, i) => {
+            if (v && JSON.stringify(v) === this.data._value) {
               checked = true
             }
           })
+          this.setData({
+            _checked: checked
+          })
+        } else if (newVal && typeof newVal === 'string') {
+          let checked = false
+          if (newVal === this.data._value) {
+            checked = true
+          }
+          this.setData({
+            _checked: checked
+          })
+        } else {
+          this.setData({
+            _checked: false
+          })
+        }
+      }
+    },
+    value: {
+      type: null,
+      value: null,
+      observer(newVal) {
+        let _value = null
+        if (newVal) {
+          _value = JSON.stringify(newVal)
+        }
+        this.setData({
+          _value: _value
+        })
+        let _model = this.data._model
+        if (_model && this.isArray(_model)) {
+          let checked = false
+          this.each(_model, (v, i) => {
+            if (v && JSON.stringify(v) === _value) {
+              checked = true
+            }
+          })
+          this.setData({
+            _checked: checked
+          })
+        } else if (_model && typeof _model === 'string') {
+          let checked = false
+          if (_model === _value) {
+            checked = true
+          }
           this.setData({
             _checked: checked
           })
@@ -60,15 +101,16 @@ Component({
   },
   data: {
     _model: [],
-    _checked: false
+    _checked: false,
+    _value: null
   },
   methods: {
     onChange(e) {
-      if (this.isArrayNotNull(e.detail.value)) {
-        if (this.isArray(this.data._model)) {
+      if (this.isArrayNotNull(e.detail.value)) { // 选中
+        if (this.isArray(this.data.model)) {
           let checked = false
           this.each(this.data._model, (v, i) => {
-            if (v === this.data.value) {
+            if (v && JSON.stringify(v) === this.data._value) {
               checked = true
             }
           })
@@ -79,17 +121,21 @@ Component({
               '_model': temp
             })
           }
+        } else if (typeof this.data.model === 'string') {
+          this.setData({
+            '_model': e.detail.value[0]
+          })
         } else {
           this.setData({
             '_model': [this.data.value]
           })
         }
-      } else {
-        if (this.isArray(this.data._model)) {
+      } else { // 未选中
+        if (this.isArray(this.data.model)) {
           let checked = false
           let index = -1
           this.each(this.data._model, (v, i) => {
-            if (v === this.data.value) {
+            if (v && JSON.stringify(v) === this.data._value) {
               checked = true
               index = i
             }
@@ -101,6 +147,10 @@ Component({
               '_model': temp
             })
           }
+        } else if (typeof this.data.model === 'string') {
+          this.setData({
+            '_model': ''
+          })
         } else {
           this.setData({
             '_model': []

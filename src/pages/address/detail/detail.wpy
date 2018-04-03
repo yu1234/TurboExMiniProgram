@@ -1,0 +1,179 @@
+<style lang="less">
+  .header {
+    padding-top: .75rem;
+    .avatar {
+      display: block;
+      width: 3.5rem;
+      height: 3.5rem;
+    }
+    .text {
+      font-size: 1.2rem;
+    }
+  }
+
+  .tool {
+    padding-top: 1.5rem;
+    .avatar {
+      display: inline-block;
+      width: 3rem;
+      height: 3rem;
+      color: rgb(33, 33, 33);
+      background-color: rgb(245, 245, 245);
+      border-radius: 50%;
+      .icon {
+        font-size: 1.4rem;
+      }
+    }
+    .text {
+      margin-top: .3rem;
+      font-size: .75rem;
+    }
+  }
+
+  .list {
+    padding-top: .75rem;
+    padding-left: .5rem;
+    padding-right: .5rem;
+    .title {
+      font-size: .95rem;
+      color: rgb(153, 153, 153);
+      padding-right: 1rem;
+      min-width: 5rem;
+    }
+    .text {
+      max-width: 13rem;
+      height: 2rem;
+      font-size: .95rem;
+      color: rgb(73, 169, 242);
+    }
+    .text1 {
+      max-width: 14.5rem;
+      height: 2rem;
+      font-size: .95rem;
+    }
+  }
+
+</style>
+<template>
+  <view class="header">
+    <wxc-flex dir="top" cross="center">
+      <view>
+        <wxc-avatar class="avatar" src="/assets/av1.png"></wxc-avatar>
+      </view>
+      <view class="text">
+        <text>xxxx</text>
+      </view>
+    </wxc-flex>
+  </view>
+  <view class="tool">
+    <wxc-flex main="center">
+      <view class="tb-flex-item text-center">
+        <wxc-avatar class="avatar">
+          <icon class="iconfont icon-linkman_icon_mail_de icon"></icon>
+        </wxc-avatar>
+        <view class="text-center text">
+          <text>发邮件</text>
+        </view>
+      </view>
+      <view class="tb-flex-item text-center">
+        <wxc-avatar class="avatar">
+          <icon class="iconfont icon-linkman_icon_call_de icon"></icon>
+        </wxc-avatar>
+        <view class="text-center text">
+          <text>打电话</text>
+        </view>
+      </view>
+    </wxc-flex>
+  </view>
+  <view class="list">
+    <wxc-flex>
+      <view class="title">
+        <text>邮件地址</text>
+      </view>
+      <view>
+        <wxc-flex dir="top">
+          <view class="text content-nowrap">
+            <block>
+              <text>123456@qq.comn</text>
+            </block>
+          </view>
+        </wxc-flex>
+      </view>
+    </wxc-flex>
+    <wxc-flex>
+      <view class="title">
+        <text>联系电话</text>
+      </view>
+      <view>
+        <wxc-flex dir="top">
+          <view class="text content-nowrap">
+            <block>
+              <text>112345677</text>
+            </block>
+          </view>
+        </wxc-flex>
+      </view>
+    </wxc-flex>
+    <wxc-flex>
+      <view class="title">
+        <text>地址</text>
+      </view>
+      <view class="text1 content-nowrap">
+        <text>1111111111111111111呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜</text>
+      </view>
+    </wxc-flex>
+    <wxc-flex>
+      <view class="title">
+        <text>单位</text>
+      </view>
+      <view class="text1 content-nowrap">
+        <text>1111111111111111111呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜</text>
+      </view>
+    </wxc-flex>
+    <wxc-flex>
+      <view class="title">
+        <text>部门</text>
+      </view>
+      <view class="text1 content-nowrap">
+        <text>1111111111111111111呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜</text>
+      </view>
+    </wxc-flex>
+    <wxc-flex>
+      <view class="title">
+        <text>职位</text>
+      </view>
+      <view class="text1 content-nowrap">
+        <text>1111111111111111111呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜</text>
+      </view>
+    </wxc-flex>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import BaseMixin from '../../../mixins/base'
+
+  export default class AddressDetail extends wepy.page {
+    mixins = [BaseMixin]
+    config = {
+      navigationBarTitleText: '',
+      usingComponents: {
+        'wxc-flex': '../../../components/minui/wxc-flex/index',
+        'wxc-avatar': '../../../components/minui/wxc-avatar/index',
+        'tb-list-item': '../../../components/tbui/tb-list-item/index'
+      },
+      enablePullDownRefresh: true,
+      backgroundTextStyle: `dark`
+    }
+    components = {}
+    data = {}
+    computed = {}
+    methods = {}
+
+    onShow() {
+    }
+
+    onLoad() {
+    }
+  }
+</script>

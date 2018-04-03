@@ -18,7 +18,8 @@
         </tb-list-item>
       </block>
       <block wx:for="{{tab.content.files}}" wx:key="{{item.id}}">
-        <tb-list-item has-left title="{{item.name}}" text="{{item.emailsFormat}}">
+        <tb-list-item has-left title="{{item.name}}" text="{{item.emailsFormat}}"
+                      @tap.stop="addressTap({{tab}},{{item}})">
           <view slot="left">
             <wxc-avatar class="avatar" src="{{item.headerPhoto}}"></wxc-avatar>
           </view>
@@ -154,7 +155,12 @@
       ]
     }
     computed = {}
-    methods = {}
+    methods = {
+      addressTap(tab, item) {
+        console.log(tab, item)
+        this.loadPage('/pages/address/detail/detail')
+      }
+    }
 
     onShow() {
     }
@@ -169,5 +175,9 @@
     display: block;
     width: 2.5rem;
     height: 2.5rem;
+  }
+
+  .subTitle {
+    color: #49a9f2;
   }
 </style>

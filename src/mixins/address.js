@@ -139,6 +139,7 @@ export default class AddressMixin extends wepy.mixin {
       this.each(srcDir, (dir, i) => {
         if (dir[tab.config.dirIdKey || 'id']) {
           let temp = {
+            type: 'dir',
             id: dir[tab.config.dirIdKey || 'id'],
             icon: tab.config.dirPhoto,
             name: dir[tab.config.dirNameKey || 'name'] || '无名称'
@@ -208,7 +209,8 @@ export default class AddressMixin extends wepy.mixin {
                   name: file.name,
                   emails: [],
                   emailsFormat: '',
-                  headerPhoto: this.defaultHeaderPhoto
+                  headerPhoto: this.defaultHeaderPhoto,
+                  type: 'address'
                 }
                 let accountT = null
                 if (this.isArrayNotNull(file.accounts)) {
@@ -244,7 +246,8 @@ export default class AddressMixin extends wepy.mixin {
                   name: file.name,
                   emails: [],
                   emailsFormat: '',
-                  headerPhoto: this.defaultHeaderPhoto
+                  headerPhoto: this.defaultHeaderPhoto,
+                  type: 'address'
                 }
                 workGroupUr.push(file[tab.config.fileIdKey])
                 distAddress.push(temp)
@@ -256,7 +259,8 @@ export default class AddressMixin extends wepy.mixin {
                   name: file.name,
                   emails: [],
                   emailsFormat: '',
-                  headerPhoto: this.defaultHeaderPhoto
+                  headerPhoto: this.defaultHeaderPhoto,
+                  type: 'address'
                 }
                 let account = null
                 if (this.isArrayNotNull(file.emails)) {
@@ -266,7 +270,7 @@ export default class AddressMixin extends wepy.mixin {
                     if (email && email.mailaddress) {
                       let temp1 = {
                         type: email.emailtype,
-                        address: email.mailaddress,
+                        address: email.account,
                         date: email.createtime
                       }
                       emails.push(temp1)

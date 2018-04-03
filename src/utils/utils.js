@@ -166,6 +166,49 @@ let utils = {
     let sizes = ['字节', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
     let i = Math.floor(Math.log(bytes) / Math.log(k))
     return (bytes / Math.pow(k, i)).toPrecision(3) + sizes[i]
+  },
+  getPhotoByFileType(fileType) {
+    let fileTypeRel = {
+      zip: '/assets/images/attachment_icon_compressed_m_default.png',
+      tar: '/assets/images/attachment_icon_compressed_m_default.png',
+      tgz: '/assets/images/attachment_icon_compressed_m_default.png',
+      rar: '/assets/images/attachment_icon_compressed_m_default.png',
+      '7z': '/assets/images/attachment_icon_compressed_m_default.png',
+      gz: '/assets/images/attachment_icon_compressed_m_default.png',
+      doc: '/assets/images/attachment_icon_word_m_default.png',
+      docx: '/assets/images/attachment_icon_word_m_default.png',
+      pdf: '/assets/images/attachment_icon_pdf_m_default.png',
+      ppt: '/assets/images/attachment_icon_ppt_m_default.png',
+      pptx: '/assets/images/attachment_icon_ppt_m_default.png',
+      xls: '/assets/images/attachment_icon_excel_m_default.png',
+      xlsx: '/assets/images/attachment_icon_excel_m_default.png',
+      txt: '/assets/images/attachment_icon_txt_m_default.png',
+      jpg: '/assets/images/attachment_icon_img_m_default.png',
+      jpeg: '/assets/images/attachment_icon_img_m_default.png',
+      png: '/assets/images/attachment_icon_img_m_default.png',
+      gif: '/assets/images/attachment_icon_img_m_default.png',
+      eml: '/assets/images/attachment_icon_eml_m_default.png',
+      jar: '/assets/images/attachment_icon_jar_m_default.png',
+      mp3: '/assets/images/attachment_icon_audio_m_default.png',
+      ape: '/assets/images/attachment_icon_audio_m_default.png',
+      flac: '/assets/images/attachment_icon_audio_m_default.png',
+      wv: '/assets/images/attachment_icon_audio_m_default.png',
+      wma: '/assets/images/attachment_icon_audio_m_default.png',
+      mp4: '/assets/images/attachment_icon_video_m_default.png',
+      avi: '/assets/images/attachment_icon_video_m_default.png',
+      rmvb: '/assets/images/attachment_icon_video_m_default.png',
+      rm: '/assets/images/attachment_icon_video_m_default.png',
+      asf: '/assets/images/attachment_icon_video_m_default.png',
+      divx: '/assets/images/attachment_icon_video_m_default.png',
+      mpg: '/assets/images/attachment_icon_video_m_default.png',
+      flv: '/assets/images/attachment_icon_video_m_default.png',
+      mpeg: '/assets/images/attachment_icon_video_m_default.png',
+      mpe: '/assets/images/attachment_icon_video_m_default.png',
+      wmv: '/assets/images/attachment_icon_video_m_default.png',
+      mkv: '/assets/images/attachment_icon_video_m_default.png',
+      vob: '/assets/images/attachment_icon_video_m_default.png'
+    }
+    return fileTypeRel[fileType] || '/assets/images/attachment_icon_other_m_default.png'
   }
 }
 module.exports = utils

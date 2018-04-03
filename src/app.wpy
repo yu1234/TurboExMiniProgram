@@ -62,7 +62,8 @@
         'pages/mail/write/write',
         'pages/video/video',
         'pages/netdisk/selector/selector',
-        'pages/netdisk/main/main'
+        'pages/netdisk/main/main',
+        'pages/address/detail/detail'
       ],
       window: {
         backgroundTextStyle: 'light',

@@ -1,4 +1,4 @@
 <checkbox-group bindchange="onChange">
-  <checkbox value="{{value}}" disabled="{{disabled}}" checked="{{_checked}}" color="{{color}}" name="{{name}}"></checkbox>
+  <checkbox value="{{_value}}" disabled="{{disabled}}" checked="{{_checked}}" color="{{color}}" name="{{name}}"></checkbox>
   {{label}}
 </checkbox-group>
