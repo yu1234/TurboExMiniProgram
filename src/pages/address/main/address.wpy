@@ -157,8 +157,7 @@
     computed = {}
     methods = {
       addressTap(tab, item) {
-        console.log(tab, item)
-        this.loadPage('/pages/address/detail/detail')
+        this.loadPage(`/pages/address/detail/detail?id=${item.id}&type=${tab.id}`)
       }
     }
 

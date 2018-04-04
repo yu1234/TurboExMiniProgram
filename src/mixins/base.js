@@ -153,7 +153,8 @@ export default class BaseMixin extends wepy.mixin {
                     id: userObj.id,
                     headerPhoto: src,
                     name: userObj.name,
-                    accounts: userObj.accounts || []
+                    accounts: userObj.accounts || [],
+                    obj: userObj
                   }
                   this.$parent.globalData.sysUserMap[keys[i]] = temp
                   this.$parent.globalData.sysUserMap[temp.id] = temp
@@ -198,7 +199,8 @@ export default class BaseMixin extends wepy.mixin {
                     id: userObj.id,
                     headerPhoto: src,
                     name: userObj.name,
-                    accounts: userObj.accounts || []
+                    accounts: userObj.accounts || [],
+                    obj: userObj
                   }
                   this.$parent.globalData.sysUserMap[temp.id] = temp
                   if (this.isArrayNotNull(temp.accounts)) {

@@ -39,6 +39,7 @@
       color: rgb(153, 153, 153);
       padding-right: 1rem;
       min-width: 5rem;
+      min-height: 2rem;
     }
     .text {
       max-width: 13rem;
@@ -48,7 +49,7 @@
     }
     .text1 {
       max-width: 14.5rem;
-      height: 2rem;
+      min-height: 2rem;
       font-size: .95rem;
     }
   }
@@ -58,10 +59,10 @@
   <view class="header">
     <wxc-flex dir="top" cross="center">
       <view>
-        <wxc-avatar class="avatar" src="/assets/av1.png"></wxc-avatar>
+        <wxc-avatar class="avatar" src="{{detailInfo.headerPhoto}}"></wxc-avatar>
       </view>
       <view class="text">
-        <text>xxxx</text>
+        <text>{{detailInfo.name}}</text>
       </view>
     </wxc-flex>
   </view>
@@ -92,11 +93,11 @@
       </view>
       <view>
         <wxc-flex dir="top">
-          <view class="text content-nowrap">
-            <block>
-              <text>123456@qq.comn</text>
-            </block>
-          </view>
+          <block wx:for="{{detailInfo.emails}}" wx:key="{{item.mail}}">
+            <view class="text content-nowrap">
+              <text>{{item.mail}}</text>
+            </view>
+          </block>
         </wxc-flex>
       </view>
     </wxc-flex>
@@ -106,11 +107,11 @@
       </view>
       <view>
         <wxc-flex dir="top">
-          <view class="text content-nowrap">
-            <block>
-              <text>112345677</text>
-            </block>
-          </view>
+          <block wx:for="{{detailInfo.phones}}" wx:key="{{item.phone}}">
+            <view class="text content-nowrap">
+              <text>{{item.phone}}</text>
+            </view>
+          </block>
         </wxc-flex>
       </view>
     </wxc-flex>
@@ -118,32 +119,40 @@
       <view class="title">
         <text>地址</text>
       </view>
-      <view class="text1 content-nowrap">
-        <text>1111111111111111111呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜</text>
+      <view class="text1">
+        <text>{{detailInfo.address}}</text>
       </view>
     </wxc-flex>
     <wxc-flex>
       <view class="title">
         <text>单位</text>
       </view>
-      <view class="text1 content-nowrap">
-        <text>1111111111111111111呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜</text>
+      <view class="text1">
+        <text>{{detailInfo.organization}}</text>
       </view>
     </wxc-flex>
     <wxc-flex>
       <view class="title">
         <text>部门</text>
       </view>
-      <view class="text1 content-nowrap">
-        <text>1111111111111111111呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜</text>
+      <view class="text1">
+        <text>{{detailInfo.department}}</text>
       </view>
     </wxc-flex>
     <wxc-flex>
       <view class="title">
         <text>职位</text>
       </view>
-      <view class="text1 content-nowrap">
-        <text>1111111111111111111呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜呜</text>
+      <view class="text1">
+        <text>{{detailInfo.employment}}</text>
+      </view>
+    </wxc-flex>
+    <wxc-flex>
+      <view class="title">
+        <text>备注</text>
+      </view>
+      <view class="text1">
+        <text>{{detailInfo.remark}}</text>
       </view>
     </wxc-flex>
   </view>
@@ -152,6 +161,8 @@
 <script>
   import wepy from 'wepy'
   import BaseMixin from '../../../mixins/base'
+  import {twCallBeanPromise} from '../../../utils/twmodule'
+  import {defaultErrors} from '../../../utils/utils'
 
   export default class AddressDetail extends wepy.page {
     mixins = [BaseMixin]
@@ -166,14 +177,262 @@
       backgroundTextStyle: `dark`
     }
     components = {}
-    data = {}
+    data = {
+      detailInfo: {}
+    }
     computed = {}
     methods = {}
 
     onShow() {
     }
 
-    onLoad() {
+    onLoad(options) {
+      let self = this
+      if (options && options.id && options.type) {
+        self.getAddressDetail(options.type, options.id).then((data) => {
+          this.detailInfo = data
+          this.$apply()
+          console.log(data)
+        }).catch((e) => {
+          wepy.showToast({
+            title: e.message,
+            icon: 'none',
+            complete() {
+              setTimeout(() => {
+                self.backPage()
+              }, 1000)
+            }
+          })
+        })
+      } else {
+        wepy.showToast({
+          title: '获取数据失败,请重试',
+          icon: 'none',
+          complete() {
+            setTimeout(() => {
+              self.backPage()
+            }, 1000)
+          }
+        })
+      }
+    }
+
+    /**
+     * 获取地址详情
+     * @param type
+     * @param id
+     * @return {Promise<any>}
+     */
+    getAddressDetail(type, id) {
+      return new Promise((resolve, reject) => {
+        if (type && id) {
+          if (type === 'sys' || type === 'personal' || type === 'common') {
+            twCallBeanPromise('address.' + type + '.item.get', {aiid: id}).then((ret) => {
+              if (ret.beanparam.data.id) {
+                this.addressDetailFormat(id, ret.beanparam.data, type).then((data) => {
+                  resolve(data)
+                })
+              } else {
+                reject(defaultErrors.customError('系统暂无此地址详细数据'))
+              }
+            }).catch(function (e) {
+              reject(defaultErrors.customError('系统暂无此地址详细数据'))
+            })
+          } else if (type === 'org') {
+            this.getSysAccountInfo(id).then((res) => {
+              this.addressDetailFormat(id, res, type).then((data) => {
+                resolve(data)
+              })
+            }).catch(function (e) {
+              reject(defaultErrors.customError('系统暂无此地址详细数据'))
+            })
+          } else if (type === 'workgroup') {
+            if (id.indexOf('@') === -1) {
+              this.getSysAccountInfo(id).then((res) => {
+                this.addressDetailFormat(id, res, type).then((data) => {
+                  resolve(data)
+                })
+              }).catch(function (e) {
+                reject(defaultErrors.customError('系统暂无此地址详细数据'))
+              })
+            } else {
+              let dist = {
+                id: id,
+                headerPhoto: this.defaultHeaderPhoto,
+                name: id,
+                emails: [{mail: id, type: 0}],
+                phones: [],
+                address: '',
+                organization: '',
+                department: '',
+                employment: '',
+                remark: ''
+              }
+              resolve(dist)
+            }
+          } else {
+            reject(defaultErrors.customError('系统暂无此地址详细数据'))
+          }
+        } else {
+          reject(defaultErrors.customError('系统暂无此地址详细数据'))
+        }
+      })
+    }
+
+    /**
+     * 地址详情格式化
+     */
+    addressDetailFormat(id, src, type) {
+      return new Promise(resolve => {
+        if (src) {
+          let dist = {
+            id: id,
+            headerPhoto: this.defaultHeaderPhoto,
+            name: '',
+            emails: [],
+            phones: [],
+            address: '',
+            organization: '',
+            department: '',
+            employment: '',
+            remark: ''
+          }
+          if (type === 'sys' || type === 'personal' || type === 'common') {
+            dist.name = src.name
+            let address = null
+            if (this.isArrayNotNull(src.emails)) {
+              this.each(src.emails, (ml, i) => {
+                if (ml.account) {
+                  let temp = {
+                    mail: ml.account,
+                    type: ml.emailtype || 0
+                  }
+                  dist.emails.push(temp)
+                  if (!address) {
+                    address = ml.account
+                  }
+                }
+              })
+            }
+            if (this.isArrayNotNull(src.tels)) {
+              this.each(src.tels, (tel, i) => {
+                if (tel.tel) {
+                  let temp = {
+                    phone: tel.tel,
+                    type: tel.teltype || 0
+                  }
+                  dist.phones.push(temp)
+                }
+              })
+            }
+            if (src.attrs) {
+              let attrs = src.attrs
+              dist.address = `${attrs.country || ''}${attrs.state_province || ''}${attrs.city || ''}${attrs.address || ''}(${attrs.postalcode || 0})`
+              dist.organization = attrs.organization || ''
+              dist.department = attrs.department
+              dist.employment = attrs.employment
+              dist.remark = attrs.remark
+            }
+            if (address) {
+              this.getSysUserInfo([address]).then((map) => {
+                if (map[address] && map[address].headerPhoto) {
+                  dist.headerPhoto = map[address].headerPhoto
+                }
+              })
+            }
+            resolve(dist)
+          } else if (type === 'org' || type === 'workgroup') {
+            dist.name = src.name
+            if (this.isArrayNotNull(src.accounts)) {
+              this.each(src.accounts, (ml, i) => {
+                if (ml.domain && ml.username) {
+                  let temp = {
+                    mail: `${ml.domain}@${ml.username}`,
+                    type: ml.accounttype || 0
+                  }
+                  dist.emails.push(temp)
+                }
+              })
+            }
+            if (this.isArrayNotNull(src.obj.tels)) {
+              this.each(src.obj.tels, (tel, i) => {
+                if (tel.tel) {
+                  let temp = {
+                    phone: tel.tel,
+                    type: tel.teltype || 0
+                  }
+                  dist.phones.push(temp)
+                }
+              })
+            }
+            if (src.obj.attrs) {
+              let attrs = src.obj.attrs
+              dist.address = `${attrs.country || ''}${attrs.state_province || ''}${attrs.city || ''}${attrs.address || ''}(${attrs.postalcode || 0})`
+              dist.organization = attrs.organization || ''
+              dist.department = attrs.department
+              dist.employment = attrs.position
+              dist.remark = attrs.remark || ''
+            }
+            if (src.headerPhoto) {
+              dist.headerPhoto = src.headerPhoto
+            }
+            resolve(dist)
+          } else {
+            resolve({})
+          }
+        } else {
+          resolve({})
+        }
+      })
+    }
+
+    /**
+     * 获取系统用户详情
+     * @param id
+     * @return {Promise<any>}
+     */
+    getSysAccountInfo(id) {
+      return new Promise((resolve, reject) => {
+        this.getSysUserInfoById([id]).then((obj) => {
+          if (obj && obj[id]) {
+            var r = obj[id]
+            // 获取部门和职位
+            twCallBeanPromise('config.post.getlist', {}).then((ret) => {
+              if (ret.beanparam.data.posts && ret.beanparam.data.posts.length > 0) {
+                var list = ret.beanparam.data.posts
+                var postMap = {}
+                for (var i = 0; i < list.length; i++) {
+                  postMap[list[i].poid] = list[i].name
+                }
+                twCallBeanPromise('du.org.getudr', {'ids': [id]}).then((ret1) => {
+                  if (ret1.beanparam.data.U_D) {
+                    var orgs = ret1.beanparam.data.U_D[id]
+                    if (orgs) {
+                      this.each(orgs, function (key, org) {
+                        if (org.poid && postMap[org.poid]) {
+                          orgs[key].postName = postMap[org.poid]
+                        }
+                      })
+                      r.orgs = orgs
+                    }
+                  }
+                  resolve(r)
+                }).catch(function () {
+                  resolve(r)
+                })
+              } else {
+                resolve(r)
+              }
+            }).catch(function (e) {
+              reject(defaultErrors.serverError)
+            })
+          } else {
+            reject(defaultErrors.serverError)
+          }
+        }).catch(function (e) {
+          reject(defaultErrors.serverError)
+        })
+      })
     }
   }
 </script>
