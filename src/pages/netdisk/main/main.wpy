@@ -10,9 +10,9 @@
   }
 </style>
 <template>
-  <wxc-tab bind:tabchange="tabChange" component-id="c2" animate="{{true}}" active-text-color="#49A9F2"
+  <wxc-tab bind:tabchange="tabChange" component-id="c3" animate="{{true}}" active-text-color="#49A9F2"
            active-line-color="#49A9F2" full-screen>
-    <wxc-tab-panel wx:for="{{tabs}}" wx:for-item="tab" wx:key="{{tab.id}}" tab-index="{{index}}" component-id="c2"
+    <wxc-tab-panel wx:for="{{tabs}}" wx:for-item="tab" wx:key="{{tab.id}}" tab-index="{{index}}" component-id="c3"
                    label="{{tab.title}}">
       <tb-list-item has-left @tap.stop="" wx:if="{{tab.dirsHistory.length>1}}" sub-title="返回上一级"
                     sub-title-class="subTitle" @tap.stop="backNetDiskFolderTap">
@@ -28,7 +28,9 @@
         </tb-list-item>
       </block>
       <block wx:for="{{tab.content.files}}" wx:key="{{item.id}}">
-        <tb-list-item has-left title="{{item.name}}" text="{{item.formatSize}}{{decode.emsp}}{{item.date}}">
+        <tb-list-item has-left title="{{item.name}}"
+                      text="{{item.size?item.formatSize:''}}{{item.size?decode.emsp:''}}{{item.date}}"
+                      @tap.stop="fileItemTap({{tab}},{{item}})">
           <view slot="left">
             <wxc-avatar class="avatar" mold="square" src="{{item.icon}}"></wxc-avatar>
           </view>
@@ -46,11 +48,14 @@
   import CommonMixin from '../../../mixins/common'
   import PullDownRefreshMixin from '../../../mixins/pullDownRefresh'
   import LoadMoreMixin from '../../../mixins/loadMore'
+  import onfire from '../../../utils/onfire.min'
+  import {downloadFile, getFileType, defaultErrors} from '../../../utils/utils'
+  import {twFormatGetFileCallBeanUri, twCallBeanPromise} from '../../../utils/twmodule'
 
   export default class NetDiskMain extends wepy.page {
     mixins = [BaseMixin, NetDiskMixin, CommonMixin, PullDownRefreshMixin, LoadMoreMixin]
     config = {
-      navigationBarTitleText: '网盘文件选择',
+      navigationBarTitleText: '网络硬盘',
       usingComponents: {
         'wxc-flex': '../../../components/minui/wxc-flex/index',
         'wxc-tab': '../../../components/minui/wxc-tab/index',
@@ -82,7 +87,13 @@
             dirPhoto: '/assets/images/attachment_icon_folder_m_default.png',
             dirObjKey: 'dirs',
             fileObjKey: 'files',
-            fileIdKey: 'nfid'
+            fileIdKey: 'nfid',
+            filePermissions: {
+              download: {permission: true, name: '下载'},
+              delete: {permission: false, name: '删除'},
+              forward: {permission: true, name: '转发'},
+              move: {permission: false, name: '移动'}
+            }
           }
         },
         {
@@ -101,7 +112,13 @@
             dirPhoto: '/assets/images/attachment_icon_folder_m_default.png',
             dirObjKey: 'dirs',
             fileObjKey: 'files',
-            fileIdKey: 'nfid'
+            fileIdKey: 'nfid',
+            filePermissions: {
+              download: {permission: true, name: '下载'},
+              delete: {permission: true, name: '删除'},
+              forward: {permission: true, name: '转发'},
+              move: {permission: true, name: '移动'}
+            }
           }
         },
         {
@@ -120,7 +137,13 @@
             dirPhoto: '/assets/images/group.png',
             dirObjKey: 'workgroups',
             fileObjKey: 'files',
-            fileIdKey: 'nfid'
+            fileIdKey: 'nfid',
+            filePermissions: {
+              download: {permission: true, name: '下载'},
+              delete: {permission: false, name: '删除'},
+              forward: {permission: true, name: '转发'},
+              move: {permission: false, name: '移动'}
+            }
           }
         },
         {
@@ -138,7 +161,13 @@
             dirPhoto: null,
             dirObjKey: null,
             fileObjKey: 'attachs',
-            fileIdKey: 'atid'
+            fileIdKey: 'atid',
+            filePermissions: {
+              download: {permission: true, name: '下载'},
+              delete: {permission: false, name: '删除'},
+              forward: {permission: true, name: '转发'},
+              move: {permission: false, name: '移动'}
+            }
           }
         },
         {
@@ -156,18 +185,317 @@
             dirPhoto: null,
             dirObjKey: null,
             fileObjKey: 'files',
-            fileIdKey: 'nfid'
+            fileIdKey: 'nfid',
+            filePermissions: {
+              download: {permission: true, name: '下载'},
+              delete: {permission: true, name: '删除'},
+              forward: {permission: true, name: '转发'},
+              move: {permission: false, name: '移动'}
+            }
+          }
+        },
+        {
+          title: '离线文件',
+          content: {dirs: {}, files: []},
+          id: 'offline',
+          dirId: '0',
+          fromIndex: 0,
+          fileCallBean: 'netdisk.offline.file.getlist',
+          dirCallBean: null,
+          config: {
+            dirPidKey: null,
+            dirIdKey: null,
+            dirNameKey: null,
+            dirPhoto: null,
+            dirObjKey: null,
+            fileObjKey: 'files',
+            fileIdKey: 'nfid',
+            filePermissions: {
+              download: {permission: true, name: '下载'},
+              delete: {permission: true, name: '删除'},
+              forward: {permission: true, name: '转发'},
+              move: {permission: false, name: '移动'}
+            }
+          }
+        },
+        {
+          title: '我的共享',
+          content: {dirs: {}, files: []},
+          id: 'myShare',
+          dirId: '0',
+          fromIndex: 0,
+          fileCallBean: 'accessright.getlist',
+          dirCallBean: null,
+          config: {
+            dirPidKey: null,
+            dirIdKey: null,
+            dirNameKey: null,
+            dirPhoto: null,
+            dirObjKey: null,
+            fileObjKey: 'list',
+            fileIdKey: 'nfid',
+            filePermissions: {
+              download: {permission: false, name: '下载'},
+              delete: {permission: false, name: '删除'},
+              forward: {permission: true, name: '转发'},
+              move: {permission: false, name: '移动'},
+              cancelShare: {permission: true, name: '取消分享'}
+            }
+          }
+        },
+        {
+          title: '共享给我',
+          content: {dirs: {}, files: []},
+          id: 'shareToMe',
+          dirId: '0',
+          fromIndex: 0,
+          fileCallBean: 'accessright.getmyreslist',
+          dirCallBean: 'accessright.getownersbyshareto',
+          dirsHistory: ['0'],
+          config: {
+            dirPidKey: 'id',
+            dirIdKey: 'id',
+            dirNameKey: 'name',
+            dirPhoto: null,
+            dirObjKey: 'owners',
+            fileObjKey: 'list',
+            fileIdKey: 'nfid',
+            filePermissions: {
+              download: {permission: true, name: '下载'},
+              delete: {permission: false, name: '删除'},
+              forward: {permission: true, name: '转发'},
+              move: {permission: false, name: '移动'}
+            }
           }
         }
-      ]
+      ],
+      cacheData: {
+        fileMove: {}
+      }
     }
     computed = {}
-    methods = {}
+    methods = {
+      fileItemTap(tab, item) {
+        let _this = this
+        let btns = []
+        let btnsObj = []
+        if (tab) {
+          btnsObj = this.getFilePermissions(tab.config.filePermissions)
+          this.each(btnsObj, (v, i) => {
+            btns.push(v.name)
+          })
+        }
+        if (this.isArrayNotNull(btns)) {
+          wx.showActionSheet({
+            itemList: btns,
+            success: function (res) {
+              let btn = btnsObj[res.tapIndex]
+              if (btn) {
+                if (btn.id === 'download') {
+                  _this.fileDownload(tab, item)
+                } else if (btn.id === 'delete') {
+                  _this.deleteFile(tab.dirId, [item.id], tab).then(() => {
+                    _this.refresh().then(() => {
+                      wepy.showToast({
+                        title: '删除成功'
+                      })
+                    })
+                  }).catch((e) => {
+                    wepy.showToast({
+                      title: e.message,
+                      icon: 'none'
+                    })
+                  })
+                } else if (btn.id === 'forward') {
+                  let params = {
+                    attaches: [item]
+                  }
+                  _this.loadPage(`/pages/mail/write/write?type=forwardAttach&data=${JSON.stringify(params)}`)
+                } else if (btn.id === 'move') {
+                  _this.cacheData.fileMove.item = item
+                  _this.cacheData.fileMove.tab = tab
+                  _this.loadPage(`/pages/netdisk/dirSelector/dirSelector?selector=dirSelector&page=netDiskMain&action=fileMove`)
+                }
+              }
+            }
+          })
+        }
+      }
+    }
 
     onShow() {
     }
 
     onLoad(param) {
+      this.subscription()
+    }
+
+    onUnload(e) {
+      onfire.un('netDiskDirSelector')
+    }
+
+    subscription() {
+      let _this = this
+      let netDiskSelector = onfire.on('netDiskDirSelector', (option) => {
+        if (option && option.selector === 'dirSelector' && option.page === 'netDiskMain' && option.action === 'fileMove' && option.btn === 'ok' && option.data) {
+          if (_this.cacheData.fileMove.tab && _this.cacheData.fileMove.item && option.data.dir) {
+            _this.moveFiles(_this.cacheData.fileMove.tab, option.data.tab, _this.cacheData.fileMove.tab.dirId, option.data.dir.id, [_this.cacheData.fileMove.item.id]).then(() => {
+              _this.refresh().then(() => {
+                _this.cacheData.fileMove.item = null
+                _this.cacheData.fileMove.tab = null
+                wepy.showToast({
+                  title: '移动成功'
+                })
+              })
+            }).catch((e) => {
+              wepy.showToast({
+                title: e.message,
+                icon: 'none'
+              })
+            })
+          }
+
+        }
+      })
+      return [netDiskSelector]
+    }
+
+    /**
+     * 文件权限校验
+     * @param type
+     * @return {*}
+     */
+    getFilePermissions(filePermissions) {
+      let p = []
+      if (filePermissions) {
+        this.each(filePermissions, (v, k) => {
+          if (v && v.permission) {
+            let temp = {
+              id: k,
+              name: v.name
+            }
+            p.push(temp)
+          }
+        })
+      }
+      return p
+    }
+
+    /**
+     * 文件下载
+     */
+    fileDownload(tab, item) {
+      let path = ''
+      if (tab.id === 'personal') {
+        path = twFormatGetFileCallBeanUri('netdisk.personal.file.get', {'nfid': item.id}, getFileType(item.name), false, 0)
+        downloadFile({filePath: path, name: item.name})
+      } else if (tab.id === 'sys') {
+        path = twFormatGetFileCallBeanUri('netdisk.sys.file.get', {'nfid': item.id}, getFileType(item.name), false, 0)
+        downloadFile({filePath: path, name: item.name})
+      } else if (tab.id === 'workgroup') {
+        let ownerid = item.ownerid || ''
+        path = twFormatGetFileCallBeanUri('netdisk.workgroup.file.get', {
+          'nfid': item.id,
+          ownerid: ownerid
+        }, getFileType(item.name), false, 0)
+        downloadFile({filePath: path, name: item.name})
+      } else if (tab.id === 'largeattach') {
+        path = twFormatGetFileCallBeanUri('netdisk.largeattach.file.get', {'nfid': item.id}, getFileType(item.name), false, 0)
+      } else if (tab.id === 'attachlist') {
+        let p = {
+          atid: item.id,
+          mailid: item.mailId
+        }
+        path = twFormatGetFileCallBeanUri('mail.client.getattach', p, getFileType(item.name), false, 0)
+      } else if (tab.id === 'offline') {
+        let ownerid = item.ownerid
+        path = twFormatGetFileCallBeanUri('netdisk.offline.file.get', {
+          'nfid': item.id,
+          ownerid: ownerid
+        }, getFileType(item.name), false, 0)
+      } else if (tab.id === 'shareToMe') {
+        var share = item.share
+        var getbeanid = item.getbeanid
+        if (!share) {
+          wepy.showToast({title: '服务器错误,请刷新重试', icon: 'none'})
+          return
+        }
+        if (share.righttype.indexOf('d') === -1) {
+          wepy.showToast({title: '禁止下载', icon: 'none'})
+          return
+        }
+        path = twFormatGetFileCallBeanUri('accessright.getmyres', {
+          getbeanid: getbeanid,
+          param: share
+        }, getFileType(item.name), false, 0)
+      }
+      downloadFile({filePath: path, name: item.name})
+    }
+
+    /**
+     * 删除文件
+     */
+    deleteFile(dirId, ids, tab) {
+      return new Promise((resolve, reject) => {
+        wx.showModal({
+          title: '提示',
+          content: '确认删除该文件吗?',
+          success: function (res) {
+            if (res.confirm) {
+              if (dirId && ids && tab && ids.length > 0) {
+                twCallBeanPromise(`netdisk.${tab.id}.file.del`, {
+                  'ndid': dirId,
+                  'ids': ids
+                }).then(function (ret) {
+                  if (ret.beanparam.retcode === 0) {
+                    resolve({msg: '删除成功'})
+                  } else {
+                    reject(defaultErrors.customError('删除出错,请刷新重试'))
+                  }
+                }).catch(function (e) {
+                  reject(defaultErrors.customError('删除出错,请刷新重试'))
+                })
+              } else {
+                reject(defaultErrors.customError('删除出错,请刷新重试'))
+              }
+            } else if (res.cancel) {
+            }
+          }
+        })
+      })
+    }
+
+    /**
+     * 移动文件
+     */
+    moveFiles(srcTab, targetTab, srcDirId, targetDirId, ids) {
+      return new Promise((resolve, reject) => {
+        if (srcDirId && targetDirId && ids && ids.length > 0) {
+          if (srcDirId === targetDirId) {
+            reject(defaultErrors.customError('移出文件夹和移入文件夹相同'))
+            return
+          }
+          if (srcTab.id !== targetTab.id) {
+            reject(defaultErrors.customError('暂不支持跨空间移动'))
+            return
+          }
+          twCallBeanPromise(`netdisk.${targetTab.id}.file.changedfr`, {
+            'newndid': targetDirId,
+            'oldndid': srcDirId,
+            'nfids': ids
+          }).then(function (ret) {
+            if (ret.beanparam.retcode === 0) {
+              resolve({msg: '文件已移动'})
+            } else {
+              reject(defaultErrors.customError('移动出错,请刷新重试'))
+            }
+          }).catch(function (e) {
+            reject(defaultErrors.customError('移动出错,请刷新重试'))
+          })
+        } else {
+          reject(defaultErrors.customError('移动出错,请刷新重试'))
+        }
+      })
     }
   }
 </script>

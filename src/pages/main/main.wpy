@@ -93,8 +93,6 @@
       this.bottomTabActive = 1
       this.getMlNotice()
     }
-
-
     /**
      * 下拉刷新函数
      */

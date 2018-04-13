@@ -1,5 +1,5 @@
 import wepy from 'wepy'
-import {twCallBeanPromise} from '../utils/twmodule'
+import {twCallBeanPromise, twFormatGetFileCallBeanUri} from '../utils/twmodule'
 import {bytesToSize, strFormatDate, getPhotoByFileType} from '../utils/utils'
 
 export default class NetDiskMixin extends wepy.mixin {
@@ -111,15 +111,39 @@ export default class NetDiskMixin extends wepy.mixin {
         if (!params) {
           params = {}
         }
+        if (tab.id === 'shareToMe' && pid === '0') {
+          params.getbeanid = 'netdisk.personal.file.share.get'
+        }
         if (callBean && flag) {
           if (pid) {
             params[tab.config.dirPidKey || 'id'] = pid
           }
-          twCallBeanPromise(callBean, params).then((ret) => {
-            let dirs = ret.beanparam.data[tab.config.dirObjKey || 'dirs'] || []
-            let r = this.formatNetDiskDir(dirs, tab)
-            resolve(r)
-          })
+          if (tab.id === 'shareToMe' && pid === '0') {
+            let calls = []
+            calls.push(twCallBeanPromise(callBean, {getbeanid: 'netdisk.personal.file.share.get'}))
+            calls.push(twCallBeanPromise(callBean, {getbeanid: 'netdisk.personal.dir.share.get'}))
+            Promise.all(calls).then((rets) => {
+              let owners = []
+              if (rets && rets.length > 0) {
+                for (let i = 0, leni = rets.length; i < leni; i++) {
+                  if (rets[i].beanparam.data.owners) {
+                    var tOwners = rets[i].beanparam.data.owners
+                    if (this.isArrayNotNull(tOwners)) {
+                      owners = this.concat(owners, tOwners)
+                    }
+                  }
+                }
+              }
+              let r = this.formatNetDiskDir(owners, tab)
+              resolve(r)
+            })
+          } else {
+            twCallBeanPromise(callBean, params).then((ret) => {
+              let dirs = ret.beanparam.data[tab.config.dirObjKey || 'dirs'] || []
+              let r = this.formatNetDiskDir(dirs, tab)
+              resolve(r)
+            })
+          }
         } else {
           resolve([])
         }
@@ -143,6 +167,12 @@ export default class NetDiskMixin extends wepy.mixin {
             id: dir[tab.config.dirIdKey || 'id'],
             icon: tab.config.dirPhoto,
             name: dir[tab.config.dirNameKey || 'name'] || '无名称'
+          }
+          if (tab.id === 'shareToMe') {
+            temp.icon = twFormatGetFileCallBeanUri('config.user.head.get', {
+              'isattach': false,
+              id: temp.id
+            })
           }
           distDir.push(temp)
         }
@@ -172,12 +202,43 @@ export default class NetDiskMixin extends wepy.mixin {
           params.ndid = tab.dirId
         } else if (tab.id === 'workgroup') {
           params.ownerid = tab.dirId
+        } else if (tab.id === 'shareToMe') {
+          params.id = tab.dirId
         }
-        twCallBeanPromise(tab.fileCallBean, params, {password: params.password}).then((ret) => {
-          let files = ret.beanparam.data[tab.config.fileObjKey || 'files'] || []
-          var r = this.formatNetDiskFile(files, tab)
-          resolve(r)
-        })
+        if (tab.fileCallBean) {
+          if (tab.id === 'shareToMe') {
+            let calls = []
+            calls.push(twCallBeanPromise(tab.fileCallBean, {
+              getbeanid: 'netdisk.personal.file.share.get',
+              ownerid: params.id
+            }))
+            calls.push(twCallBeanPromise(tab.fileCallBean, {
+              getbeanid: 'netdisk.personal.dir.share.get',
+              ownerid: params.id
+            }))
+            Promise.all(calls).then((rets) => {
+              let data = []
+              if (rets && rets.length > 0) {
+                for (var i = 0, leni = rets.length; i < leni; i++) {
+                  var tList = rets[i].beanparam.data[tab.config.fileObjKey] || []
+                  if (this.isArrayNotNull(tList)) {
+                    data = this.concat(data, tList)
+                  }
+                }
+              }
+              var r = this.formatNetDiskFile(data, tab)
+              resolve(r)
+            })
+          } else {
+            twCallBeanPromise(tab.fileCallBean, params, {password: params.password}).then((ret) => {
+              let files = ret.beanparam.data[tab.config.fileObjKey || 'files'] || []
+              var r = this.formatNetDiskFile(files, tab)
+              resolve(r)
+            })
+          }
+        } else {
+          resolve([])
+        }
       } else {
         resolve([])
       }
@@ -212,6 +273,48 @@ export default class NetDiskMixin extends wepy.mixin {
             }
             distFiles.push(temp)
           }
+        } else if (tab.id === 'myShare') {
+          if (file.sharemj && file.sharemj[tab.config.fileIdKey]) {
+            let temp = {
+              type: 'file',
+              size: file.sharemj.filesize || 0,
+              formatSize: bytesToSize(file.sharemj.filesize || 0),
+              id: file.sharemj[tab.config.fileIdKey],
+              name: file.sharemj.name || '无名字'
+            }
+            if (temp.name) {
+              let fileType = this.getFileType(temp.name)
+              temp.icon = getPhotoByFileType(fileType)
+            }
+            if (file.modifytime) {
+              temp.date = strFormatDate(file.modifytime, 'yyyy-MM-dd hh:mm')
+            }
+            distFiles.push(temp)
+          }
+        } else if (tab.id === 'shareToMe') {
+          if (file.share && file.share[tab.config.fileIdKey]) {
+            let temp = {
+              type: 'file',
+              size: file.filesize || 0,
+              formatSize: bytesToSize(file.filesize || 0),
+              id: file.share[tab.config.fileIdKey],
+              name: file.name || '无名字',
+              getbeanid: file.getbeanid,
+              share: file.share
+            }
+            if (temp.name) {
+              let fileType = this.getFileType(temp.name)
+              temp.icon = getPhotoByFileType(fileType)
+            }
+            if (file.modifytime) {
+              temp.date = strFormatDate(file.modifytime, 'yyyy-MM-dd hh:mm')
+            }
+            if (file.getbeanid === 'netdisk.personal.file.share.get') {
+              distFiles.push(temp)
+            } else if (file.getbeanid === 'netdisk.personal.dir.share.get') {
+              // TODO
+            }
+          }
         } else {
           if (file[tab.config.fileIdKey]) {
             let temp = {
@@ -227,6 +330,9 @@ export default class NetDiskMixin extends wepy.mixin {
             }
             if (file.modifytime) {
               temp.date = strFormatDate(file.modifytime, 'yyyy-MM-dd hh:mm')
+            }
+            if (file.ownerid) {
+              temp.ownerid = file.ownerid
             }
             distFiles.push(temp)
           }

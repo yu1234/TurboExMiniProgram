@@ -18,18 +18,6 @@ export default class CommonMixin extends wepy.mixin {
     jpeg: 'img',
     jpg: 'img',
     gif: 'img'
-    /* mp4: 'video',
-     avi: 'video',
-     rmvb: 'video',
-     rm: 'video',
-     asf: 'video',
-     divx: 'video',
-     mpg: 'video',
-     flv: 'video',
-     mpeg: 'video',
-     mpe: 'video',
-     wmv: 'video',
-     mkv: 'video' */
   }
   mixins = [BaseMixin]
   data = {
@@ -628,89 +616,10 @@ export default class CommonMixin extends wepy.mixin {
 
     })
   }
-
-  /**
-   * 视频预览
-   */
-  previewVideoFile(obj) {
-    let self = this
-    if (!obj) {
-      if (self.isFunction(obj.fail)) {
-        obj.fail()
-      }
-      if (self.isFunction(obj.complete)) {
-        obj.complete()
-      }
-      return
-    }
-    if (obj.filePath) {
-      let p = {
-        id: obj.id,
-        name: obj.name,
-        fileType: obj.fileType,
-        type: 'attach',
-        mailId: obj.mailId
-
-      }
-      let params = JSON.stringify(p)
-      self.loadPage(`/pages/video/video?params=${params}`)
-    } else {
-      wepy.showToast({title: '播放失败,请检测文件是否损坏', icon: 'none'})
-      obj.fail()
-    }
-  }
-
   /**
    * 其他文件预览处理
    */
   previewOtherFile(obj) {
     wepy.showToast({title: '对不起,该附件不支持预览', icon: 'none'})
-  }
-
-  downloadFile(obj) {
-    let self = this
-    if (!obj) {
-      if (self.isFunction(obj.fail)) {
-        obj.fail()
-      }
-      if (self.isFunction(obj.complete)) {
-        obj.complete()
-      }
-      return
-    }
-    wepy.showLoading({title: '下载中...'})
-    wepy.downloadFile({
-      url: obj.filePath,
-      success: function (res) {
-        debugger
-        console.log(`${wx.env.USER_DATA_PATH}`)
-        wepy.hideLoading()
-        self.fileSystemManager.access({
-          path: res.tempFilePath,
-          success() {
-            console.log('.fileSystemManager.acess success')
-          },
-          fail(e) {
-            console.log('.fileSystemManager.acess', e)
-          }
-        })
-        if (self.isFunction(obj.success)) {
-          obj.success()
-        }
-      },
-      fail(e) {
-        wepy.hideLoading()
-        wepy.showToast({title: '文件下载失败,请稍后重试', icon: 'none'})
-        if (self.isFunction(obj.fail)) {
-          obj.fail(e)
-        }
-      },
-      complete() {
-        wepy.hideLoading()
-        if (self.isFunction(obj.complete)) {
-          obj.complete()
-        }
-      }
-    })
   }
 }

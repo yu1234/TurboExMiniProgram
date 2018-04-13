@@ -117,7 +117,7 @@ let twmodule = {
   /**
    * 验证callbean 是否添加权限
    */
-  checkHasPermit(beanid, params, okText, cancelText) {
+  checkHasPermit(beanid, params) {
     return new Promise(function (resolve, reject) {
       let beansno = ''
       twmodule.twCallBeanPromise(beanid, params, 'getbeansno').then((ret) => {
@@ -128,10 +128,14 @@ let twmodule = {
         })
       }).then((ret) => {
         let isexist = ret.beanparam.data.isexist;
+        let r = {}
         if (isexist) {
-          resolve(true)
+          r.needPwd = true
+          r.beansno = beansno
+          resolve(r)
         } else {
-          resolve(false)
+          r.needPwd = false
+          resolve(r)
         }
       })
     })

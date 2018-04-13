@@ -1,8 +1,8 @@
 <template>
   <wxc-tab bind:tabchange="tabChange" active-text-color="#49A9F2" active-line-color="#49A9F2" animate="{{true}}"
            full-screen
-           component-id="c1" default-inde="{{6}}">
-    <wxc-tab-panel wx:for="{{tabs}}" wx:for-item="tab" wx:key="{{tab.id}}" tab-index="{{index}}" component-id="c1"
+           component-id="c2" default-inde="{{6}}">
+    <wxc-tab-panel wx:for="{{tabs}}" wx:for-item="tab" wx:key="{{tab.id}}" tab-index="{{index}}" component-id="c2"
                    label="{{tab.title}}">
       <tb-list-item has-left @tap.stop="" wx:if="{{tab.dirsHistory.length>1}}" sub-title="返回上一级"
                     sub-title-class="subTitle" @tap.stop="backAddressFolderTap">

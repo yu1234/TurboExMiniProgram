@@ -59,6 +59,7 @@
     }
   }
 
+
 </style>
 <template>
   <tb-nav has-right has-left>
@@ -81,7 +82,7 @@
                        text="{{item.text}}" titleAfter="{{item.date}}" un-read="{{item.unRead}}" top="{{item.top}}"
                        has-right="{{config.edit}}" attach="{{item.hasAttach}}" backlog="{{item.backlog}}"
                        importance="{{item.importance}}" star="{{item.star}}" wx:for="{{mails}}" wx:key="{{item.id}}"
-                       @tap.stop="readMail({{item.id}})">
+                       @tap.stop="readMail({{item}},{{index}})">
       <tb-checkbox slot="right" value="{{item.id}}" name="selected" model="{{selected}}" color="#49A9F2"
                    bind:change="formChange"/>
     </tb-mail-list-item>
@@ -205,6 +206,8 @@
       </wxc-flex>
     </view>
   </tb-popup>
+  <!--邮件密码验证-->
+  <tb-permit id="mailPermit"></tb-permit>
 </template>
 
 <script>
@@ -216,6 +219,7 @@
   import LoadMoreMixin from '../../../mixins/loadMore'
   import MailOperatorMixin from '../../../mixins/mailOperator'
   import FormMixin from '../../../mixins/form'
+  import PermitMixin from '../../../mixins/permit'
 
   const flags = [
     {id: 'star', name: '星标邮件', icon: 'icon-mailing_list_menu_ic1', color: 'rgb(255,162,0)', flag: '9'},
@@ -228,7 +232,7 @@
     },
     {id: 'backlog', name: '重要邮件', icon: 'icon-mailing_list_menu_ic2', color: 'rgb(255,59,48)', flag: '14'}]
   export default class MailList extends wepy.page {
-    mixins = [BaseMixin, PullDownRefreshMixin, LoadMoreMixin, MailOperatorMixin, FormMixin]
+    mixins = [BaseMixin, PullDownRefreshMixin, LoadMoreMixin, MailOperatorMixin, FormMixin, PermitMixin]
     config = {
       navigationBarTitleText: '收件箱',
       usingComponents: {
@@ -238,7 +242,8 @@
         'tb-nav': '../../../components/tbui/tb-nav/index',
         'tb-popup': '../../../components/tbui/tb-popup/index',
         'tb-loading-more': '../../../components/tbui/tb-load-more/index',
-        'tb-checkbox': '../../../components/tbui/tb-checkbox/index'
+        'tb-checkbox': '../../../components/tbui/tb-checkbox/index',
+        'tb-permit': '../../../components/tbui/tb-permit/index'
       },
       enablePullDownRefresh: true,
       backgroundTextStyle: `dark`
@@ -344,9 +349,6 @@
           this.refresh()
           this.popup.movePopupOpen = false
         })
-      },
-      readMail(id) {
-        this.loadPage(`/pages/mail/read/read?id=${id}`)
       },
       writeMail() {
         this.loadPage(`/pages/mail/write/write`)

@@ -1,5 +1,5 @@
-<view style="padding:0 .5rem 0 .5rem;">
+<view style="padding:{{padding}}px;">
   <scroll-view scroll-y="{{true}}" scroll-x="{{true}}">
-   <rich-text nodes="{{tbRichTextContent}}" bindtap="onTap" data-src="ddd"></rich-text>
+   <node nodes="{{_nodes}}" window-width="{{windowWidth}}" window-height="{{windowHeight}}" bind:tagATap="tagATap" bind:tagImgTap="tagImgTap"></node>
   </scroll-view>
 </view>

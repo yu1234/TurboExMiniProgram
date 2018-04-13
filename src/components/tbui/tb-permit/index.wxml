@@ -1,0 +1,7 @@
+<wxc-dialog class="wxc-dialog" id="mailPasswordDialog" title="请输入密码" confirm-text="确定" confirm-color="{{confirmColor}}"
+            cancel-text="取消" cancel-color="{{cancelColor}}"
+            bindconfirm="onConfirm" bindcancel="onCancel">
+  <view>
+    <input class="input" placeholder="密码" password="{{true}}" value="{{password}}" bindinput="onInput"/>
+  </view>
+</wxc-dialog>

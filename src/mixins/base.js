@@ -43,6 +43,12 @@ export default class BaseMixin extends wepy.mixin {
     })
   }
 
+  redirectPage(url) {
+    wepy.redirectTo({
+      url: url
+    })
+  }
+
   loadTabPage(url) {
     wepy.switchTab({
       url: url

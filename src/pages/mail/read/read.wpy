@@ -51,7 +51,7 @@
       </tb-list-item>
     </view>
     <view style="padding: 1rem 0;">
-      <tb-rich-text tb-rich-text-content="{{mail.content}}"></tb-rich-text>
+      <tb-rich-text nodes="{{mail.content}}" bind:tagATap="tagATap"></tb-rich-text>
     </view>
     <view style="padding: 0 .5rem 1rem .5rem" class="attaches" wx:if="{{mail.attaches&&mail.attaches.length}}">
       <block wx:for="{{mail.attaches}}" wx:key="{{item.id}}">
@@ -158,6 +158,7 @@
   import BaseMixin from '../../../mixins/base'
   import CommonMixin from '../../../mixins/common'
   import PopupMixin from '../../../mixins/popup'
+  import {downloadFile} from '../../../utils/utils'
 
   export default class Read extends wepy.page {
     mixins = [BaseMixin, CommonMixin, PopupMixin]
@@ -208,13 +209,38 @@
             itemList: ['转发', '下载', '转存'],
             success(obj) {
               if (obj.tapIndex === 1) {
-                self.downloadFile({
+                downloadFile({
                   filePath: item.downloadUrl,
+                  name: item.name,
                   success() {
                   },
                   fail() {
                   },
                   complete() {
+                  }
+                })
+              }
+            }
+          })
+        }
+      },
+      tagATap(e) {
+        let _this = this
+        let {src} = e.detail
+        if (src) {
+          wx.showActionSheet({
+            itemList: ['打开', '复制路径'],
+            success(res) {
+              if (res.tapIndex === 0) {
+                src = encodeURIComponent(src)
+                _this.loadPage(`/pages/webView/webView?src=${src}`)
+              } else if (res.tapIndex === 1) {
+                wx.setClipboardData({
+                  data: src,
+                  success: function (res) {
+                    wepy.showToast({
+                      title: '复制成功'
+                    })
                   }
                 })
               }
@@ -231,7 +257,7 @@
       let self = this
       if (params.id) {
         wepy.showLoading({title: '加载邮件中...'})
-        self.getMailById(params.id).then((mail) => {
+        self.getMailById(params.id, params.password).then((mail) => {
           console.log(mail)
           self.mail = mail
           self.$apply()

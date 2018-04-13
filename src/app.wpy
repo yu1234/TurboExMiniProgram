@@ -9,6 +9,7 @@
 
   import {setStore} from 'wepy-redux'
   import configStore from './store'
+  import Twrajax from './utils/twrajax'
 
   const store = configStore()
   setStore(store)
@@ -31,6 +32,7 @@
         },
         // 请求失败后的回调函数
         fail(p) {
+          console.log(p)
           if (p.errMsg) {
             if (p.errMsg === 'request:fail timeout') {
               wepy.showToast({
@@ -62,8 +64,12 @@
         'pages/mail/write/write',
         'pages/video/video',
         'pages/netdisk/selector/selector',
+        'pages/netdisk/dirSelector/dirSelector',
         'pages/netdisk/main/main',
-        'pages/address/detail/detail'
+        'pages/address/detail/detail',
+        'pages/webView/webView',
+        'pages/download/download',
+        'pages/logout/logout'
       ],
       window: {
         backgroundTextStyle: 'light',
@@ -109,12 +115,16 @@
       userInfo: null,
       weUserInfo: null,
       systemInfo: {},
-      sysUserMap: {}
+      sysUserMap: {},
+      rajax: null
     }
 
     onLaunch() {
       // wepy.authorize(OBJECT)
       const that = this
+      // session监听
+      that.globalData.rajax = new Twrajax()
+      that.globalData.rajax.startPolling()
       wepy.getSystemInfo({
         success: function (res) {
           if (res) {

@@ -1,0 +1,102 @@
+<!--基础元素 start-->
+<template name="wxParseVideo">
+  <!--增加video标签支持-->
+  <video class="wxParse-{{item.name}} {{item.attrs.class}}" src="{{item.attrs.src}}"></video>
+</template>
+<template name="wxParseImg">
+  <image class="wxParse-{{item.name}} {{item.attrs.class}}" data-from="{{item.from}}"
+         data-src="{{item.attrs.src}}" data-idx="{{item.imgIndex}}" src="{{item.attrs.src}}" data-index="{{index}}"
+         mode="aspectFit"
+         bindload="wxParseImgLoad" bindtap="wxParseImgTap" mode="widthFix"
+         style="width:{{item.attrs.width?item.attrs.width:(item.width+'px')}};"/>
+</template>
+<template name="WxParseBr">
+  <text>\n</text>
+</template>
+
+<template name="WxParseHr">
+  <view class="wxParse-hr"></view>
+</template>
+
+<template name="WxParseText">
+  <text space="{{true}}" decode="{{true}}">{{item.text}}</text>
+</template>
+<template name="WxParseTable">
+  <rich-text nodes="{{[item]}}"></rich-text>
+</template>
+<!--基础元素 end-->
+<block wx:for="{{_nodes}}" wx:key="">
+  <block wx:if="{{item.type == 'node'}}">
+    <block wx:if="{{item.name == 'button'}}">
+      <button type="default" size="mini">
+        <node nodes="{{item.children}}" window-width="{{windowWidth}}" window-height="{{windowHeight}}"
+              bind:tagATap="tagATap" bind:tagImgTap="tagImgTap"></node>
+      </button>
+    </block>
+    <!--li类型-->
+    <block wx:elif="{{item.name == 'li'}}">
+      <view class=" wxParse-li {{item.attrs.class}}" style="{{item.attrs.style}}">
+        <view class="wxParse-li-inner {{item.attrs.class}}">
+          <view class="wxParse-li-text {{item.attrs.class}}">
+            <view class="wxParse-li-circle {{item.attrs.class}}"></view>
+          </view>
+          <view class="wxParse-li-text {{item.attrs.class}} ">
+            <node nodes="{{item.children}}" window-width="{{windowWidth}}" window-height="{{windowHeight}}"
+                  bind:tagATap="tagATap" bind:tagImgTap="tagImgTap"></node>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!--video类型-->
+    <block wx:elif="{{item.name == 'video'}}">
+      <template is="wxParseVideo" data="{{item}}"/>
+    </block>
+
+    <!--img类型-->
+    <block wx:elif="{{item.name == 'img'}}">
+      <template is="wxParseImg" data="{{item:item,index:index}}"/>
+    </block>
+
+    <!--a类型-->
+    <block wx:elif="{{item.name == 'a'}}">
+      <view bindtap="wxParseTagATap" class="wxParse-inline  wxParse-{{item.name}} {{item.attrs.class}}"
+            data-src="{{item.attrs.href}}" style="{{item.attrs.style}}">
+        <node nodes="{{item.children}}" window-width="{{windowWidth}}" window-height="{{windowHeight}}"
+              bind:tagATap="tagATap" bind:tagImgTap="tagImgTap"></node>
+      </view>
+    </block>
+
+    <block wx:elif="{{item.name == 'br'}}">
+      <template is="WxParseBr"></template>
+    </block>
+    <block wx:elif="{{item.name == 'hr'}}">
+      <template is="WxParseHr"></template>
+    </block>
+    <block wx:elif="{{item.name == 'table'}}">
+      <template is="WxParseTable" data="{{item}}"></template>
+    </block>
+    <!--其他块级标签-->
+    <block wx:elif="{{item.tagType == 'block'}}">
+      <view class="wxParse-{{item.name}} {{item.attrs.class}} " style="{{item.attrs.style}}">
+        <node nodes="{{item.children}}" window-width="{{windowWidth}}" window-height="{{windowHeight}}"
+              bind:tagATap="tagATap" bind:tagImgTap="tagImgTap"></node>
+      </view>
+    </block>
+
+    <!--内联标签-->
+    <view wx:else class="wxParse-{{item.name}} wxParse-{{item.tagType}} {{item.attrs.class}}"
+          style="{{item.attrs.style}}">
+      <node nodes="{{item.children}}" window-width="{{windowWidth}}" window-height="{{windowHeight}}"
+            padding="{{padding}}"
+            bind:tagATap="tagATap" bind:tagImgTap="tagImgTap"></node>
+    </view>
+
+  </block>
+
+  <!--判断是否是文本节点-->
+  <block wx:elif="{{item.type == 'text'}}">
+    <!--如果是，直接进行-->
+    <template is="WxParseText" data="{{item}}"/>
+  </block>
+</block>

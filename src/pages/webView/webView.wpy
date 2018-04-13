@@ -1,0 +1,104 @@
+<style lang="less">
+
+</style>
+<template>
+  <web-view src="{{src}}"
+            bindmessage="bindmessage"></web-view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import BaseMixin from '../../mixins/base'
+  import {request} from '../../utils/utils'
+  import {service} from '../../config'
+
+  export default class WebView extends wepy.page {
+    config = {
+      navigationBarTitleText: 'web view',
+      usingComponents: {}
+    }
+    components = {}
+
+    mixins = [BaseMixin]
+
+    data = {
+      src: ''
+    }
+
+    computed = {}
+
+    methods = {
+      bindmessage(e) {
+        console.log(e)
+      }
+    }
+
+    events = {}
+
+    onLoad(options) {
+      if (options && options.src) {
+        let src = decodeURIComponent(options.src)
+        let reg = new RegExp(/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+(:[0-9]+)?|(?:ww‌​w.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~ %\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?‌​(?:[\w]*))?)/)
+        let newSrc = src.replace(reg, service.host)
+        wepy.showLoading({
+          title: '网页加载中...'
+        })
+        request.get(newSrc).then((d) => {
+          if (d.statusCode === 200) {
+            this.src = newSrc
+            this.$apply()
+            wepy.hideLoading()
+          } else {
+            wepy.hideLoading()
+            wx.showModal({
+              title: '提示',
+              content: '网页打开失败,请使用其他浏览器打开',
+              confirmText: '复制路径',
+              success: function (res) {
+                if (res.confirm) {
+                  wx.setClipboardData({
+                    data: src,
+                    success: function (res) {
+                      wepy.showToast({
+                        title: '复制成功'
+                      })
+                    }
+                  })
+                } else if (res.cancel) {
+                }
+              }
+            })
+          }
+        }).catch(() => {
+          wepy.hideLoading()
+          wx.showModal({
+            title: '提示',
+            content: '网页打开失败,请使用其他浏览器打开',
+            confirmText: '复制路径',
+            success: function (res) {
+              if (res.confirm) {
+                wx.setClipboardData({
+                  data: src,
+                  success: function (res) {
+                    wepy.showToast({
+                      title: '复制成功'
+                    })
+                  }
+                })
+              } else if (res.cancel) {
+              }
+            }
+          })
+        })
+      } else {
+        wepy.showToast({
+          title: '网页打开失败,访问路径为空',
+          icon: 'none'
+        })
+      }
+    }
+
+    onShow() {
+    }
+  }
+</script>

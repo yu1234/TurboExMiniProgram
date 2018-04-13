@@ -84,6 +84,30 @@ export default class MailOperatorMixin extends wepy.mixin {
     },
     intoFolder(type, id) {
       this.goToFolder(type, id, false)
+    },
+    readMail(mail, index) {
+      if (mail && mail.id) {
+        let mailPermit = this.$wxpage.selectComponent('#mailPermit')
+        this.checkPreMit('mail.client.get', {mailid: mail.id}, mailPermit).then((r) => {
+          if (mail.unRead) {
+            this.markingMailByFlags([mail.id], ['1'], ['0']).then(() => {
+              if (this.isArrayNotNull(this.mails) && index > -1 && this.mails.length > index) {
+                if (this.mails[index] && this.mails[index].id === mail.id) {
+                  this.mails[index].unRead = false
+                  this.$apply()
+                }
+              }
+            })
+          }
+          let password = r.password
+          this.loadPage(`/pages/mail/read/read?id=${mail.id}&password=${password}`)
+        }).catch((e) => {
+          wepy.showToast({
+            title: e.message,
+            icon: 'none'
+          })
+        })
+      }
     }
   }
 

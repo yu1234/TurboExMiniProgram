@@ -1,13 +1,13 @@
 /**
  * 小程序配置文件
  */
-//let host = 'http://192.168.191.1:8080/TurboWebApp'
-let host = 'http://mail.turbopush.cn:8080'
+// let host = 'http://192.168.191.1:8080/TurboWebApp'
+let host = 'https://yu1234.club/weixin'
 let sessionId = null
 let wid = null
 const miniProgram = {
-  appId: 'wxbc0cb5d8883f46fd',
-  appSecret: 'a68bc10f609683a5d1adf61b67d90139'
+  appId: 'wx2a1fb1a105031d7d',
+  appSecret: ''
 }
 const storageKeys = {
   password: 'password',

@@ -56,7 +56,7 @@ EventProxy.prototype.removeListener = function (eventname, callback) {
   } else {
     if (!callback) {
       // debug('Remove all listeners of %s', eventname);
-      calls[eventname] = [];
+      delete this._callbacks[eventname];
     } else {
       var list = calls[eventname];
       if (list) {

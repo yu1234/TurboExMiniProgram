@@ -1,7 +1,6 @@
 <template>
-  <video style="width: 100%;height: 100%" id="myVideo" src="{{src}}" autoplay="{{true}}" direction="{{90}}"
-         binderror="error"
-         bindwaiting="waiting"></video>
+  <video style="width: 100%;height: 100%" id="myVideo" src="{{src}}" autoplay="{{true}}"
+         binderror="error" bindwaiting="waiting"></video>
 </template>
 
 <script>
@@ -9,10 +8,12 @@
   import BaseMixin from '../../mixins/base'
   import {twFormatGetFileCallBeanUri} from '../../utils/twmodule'
 
-  export default class Address extends wepy.page {
+  export default class Video extends wepy.page {
     mixins = [BaseMixin]
     config = {
       navigationBarTitleText: '视频',
+      navigationBarBackgroundColor: '#000',
+      navigationBarTextStyle: 'white',
       usingComponents: {
         'wxc-flex': '../../components/minui/wxc-flex/index'
       }
@@ -26,7 +27,16 @@
     computed = {}
     methods = {
       error(e) {
-        console.log('video play error', e)
+        let self = this
+        wepy.showToast({
+          title: '视频打开失败',
+          icon: 'none',
+          complete() {
+            setTimeout(() => {
+              self.backPage()
+            }, 500)
+          }
+        })
       },
       waiting(e) {
         console.log('video play waiting', e)
@@ -67,6 +77,25 @@
               console.log('complete')
             }
           })
+        } else if (paramsJson.type === 'open') {
+          if (paramsJson.filePath) {
+            if (paramsJson.name) {
+              wx.setNavigationBarTitle({title: paramsJson.name})
+            }
+            self.src = paramsJson.filePath
+            self.videoContext.requestFullScreen()
+            self.videoContext.play()
+          } else {
+            wepy.showToast({
+              title: '视频打开失败',
+              icon: 'none',
+              complete() {
+                setTimeout(() => {
+                  self.backPage()
+                }, 500)
+              }
+            })
+          }
         } else {
           wepy.showToast({
             title: '视频打开失败',

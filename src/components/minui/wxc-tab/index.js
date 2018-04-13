@@ -89,7 +89,9 @@ exports.default = Component({
     }).exec();
   },
   detached: function detached() {
-    _Event2.default.removeListener();
+    _Event2.default.removeListener('to-panel-switch-' + this.componentId);
+    _Event2.default.removeListener('tab-create-' + this.componentId);
+    _Event2.default.removeListener('label-width-' + this.componentId);
   },
 
   methods: {

@@ -153,6 +153,14 @@ let utils = {
     var date = utils.strToDate(dataStr)
     return utils.formatDate(date, fmt)
   },
+  getFileType(name) {
+    if (name) {
+      let fileType = name.substring(name.lastIndexOf('.') + 1, name.length).toLowerCase() || ''
+      return fileType
+    } else {
+      return ''
+    }
+  },
   /**
    * 字节数自动转换为一个可阅读的值和单位
    * @param bytes
@@ -209,6 +217,88 @@ let utils = {
       vob: '/assets/images/attachment_icon_video_m_default.png'
     }
     return fileTypeRel[fileType] || '/assets/images/attachment_icon_other_m_default.png'
+  },
+  downloadFile(obj) {
+    let self = utils
+    if (!obj) {
+      if (self.isFunction(obj.fail)) {
+        obj.fail()
+      }
+      if (self.isFunction(obj.complete)) {
+        obj.complete()
+      }
+      return
+    }
+    if (!obj.filePath) {
+      console.error('请传入下载路径!!!')
+      if (self.isFunction(obj.fail)) {
+        obj.fail()
+      }
+      if (self.isFunction(obj.complete)) {
+        obj.complete()
+      }
+      return
+    }
+    if (!obj.name) {
+      console.error('请传入文件名称!!!')
+      if (self.isFunction(obj.fail)) {
+        obj.fail()
+      }
+      if (self.isFunction(obj.complete)) {
+        obj.complete()
+      }
+      return
+    }
+    wepy.showToast({title: '后台下载文件中,请不要关闭小程序', icon: 'none'})
+    wepy.downloadFile({
+      url: obj.filePath,
+      filePath: `${wx.env.USER_DATA_PATH}/${obj.name}`,
+      success: function (res) {
+        wx.getFileInfo({
+          filePath: res.filePath,
+          digestAlgorithm: 'sha1',
+          success(info) {
+            let downFile = wx.getStorageSync('downFile')
+            downFile = downFile || {}
+            let fileData = {
+              id: info.digest,
+              name: obj.name,
+              path: res.filePath,
+              size: info.size,
+              fileType: self.getFileType(obj.name),
+              date: new Date(),
+              formatSize: self.bytesToSize(info.size || 0),
+              formatDate: self.formatDate(new Date(), 'yyyy-MM-dd hh:mm:ss')
+            }
+            fileData.icon = self.getPhotoByFileType(fileData.fileType)
+            downFile[info.digest] = fileData
+            wx.setStorageSync('downFile', downFile)
+            wepy.showToast({title: `下载成功,请到"我>我的下载"查看文件`, icon: 'none'})
+          }
+        })
+        if (self.isFunction(obj.success)) {
+          obj.success()
+        }
+      },
+      fail(e) {
+        wepy.showToast({title: '文件下载失败,请稍后重试', icon: 'none'})
+        if (self.isFunction(obj.fail)) {
+          obj.fail(e)
+        }
+      },
+      complete() {
+        if (self.isFunction(obj.complete)) {
+          obj.complete()
+        }
+      }
+    })
+  },
+  isFunction(fn) {
+    let r = false
+    if (fn && fn instanceof Function) {
+      r = true
+    }
+    return r
   }
 }
 module.exports = utils

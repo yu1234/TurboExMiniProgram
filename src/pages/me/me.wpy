@@ -1,13 +1,15 @@
 <template>
-<view>我</view>
+  <view>我</view>
+  <view style="color: #49a9f2" @tap="logout">注销</view>
+  <view style="color: #49a9f2" @tap="downFile">下载文件管理</view>
 </template>
 
 <script>
   import wepy from 'wepy'
-  import {twCallBeanPromise, twFormatGetFileCallBeanUri} from '../../utils/twmodule'
-  import {defaultErrors, parseDate} from '../../utils/utils'
+  import BaseMixin from '../../mixins/base'
 
   export default class Me extends wepy.page {
+    mixins = [BaseMixin]
     config = {
       navigationBarTitleText: '我',
       usingComponents: {
@@ -17,11 +19,20 @@
     components = {}
     data = {}
     computed = {}
-    methods = {}
+    methods = {
+      logout() {
+        this.redirectPage('/pages/logout/logout')
+      },
+      downFile() {
+        this.loadPage('/pages/download/download')
+      }
+    }
 
     onShow() {
     }
-    onLoad() {}
+
+    onLoad() {
+    }
   }
 </script>
 

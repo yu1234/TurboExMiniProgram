@@ -54,6 +54,31 @@
     }
   }
 
+  .toolPopup {
+    max-height: 25rem;
+    max-width: 15rem;
+    min-width: 12rem;
+    padding: .5rem;
+    .item {
+      padding: .3rem;
+      color: rgb(73, 169, 242);
+    }
+  }
+
+  .listPopup {
+    max-height: 25rem;
+    max-width: 15rem;
+    min-width: 12rem;
+    padding: .5rem;
+    .item {
+      padding: .3rem;
+      .icon {
+        font-size: 1.2rem;
+        margin-right: .5rem;
+      }
+    }
+  }
+
 </style>
 <template>
   <view class="header">
@@ -68,7 +93,7 @@
   </view>
   <view class="tool">
     <wxc-flex main="center">
-      <view class="tb-flex-item text-center">
+      <view class="tb-flex-item text-center" @tap="toolItemTap('ml')">
         <wxc-avatar class="avatar">
           <icon class="iconfont icon-linkman_icon_mail_de icon"></icon>
         </wxc-avatar>
@@ -76,7 +101,7 @@
           <text>发邮件</text>
         </view>
       </view>
-      <view class="tb-flex-item text-center">
+      <view class="tb-flex-item text-center" @tap="toolItemTap('tel')">
         <wxc-avatar class="avatar">
           <icon class="iconfont icon-linkman_icon_call_de icon"></icon>
         </wxc-avatar>
@@ -94,7 +119,7 @@
       <view>
         <wxc-flex dir="top">
           <block wx:for="{{detailInfo.emails}}" wx:key="{{item.mail}}">
-            <view class="text content-nowrap">
+            <view class="text content-nowrap" @tap="listItemTap('ml',{{item.mail}})">
               <text>{{item.mail}}</text>
             </view>
           </block>
@@ -108,7 +133,7 @@
       <view>
         <wxc-flex dir="top">
           <block wx:for="{{detailInfo.phones}}" wx:key="{{item.phone}}">
-            <view class="text content-nowrap">
+            <view class="text content-nowrap" @tap="listItemTap('tel',{{item.phone}})">
               <text>{{item.phone}}</text>
             </view>
           </block>
@@ -156,32 +181,152 @@
       </view>
     </wxc-flex>
   </view>
+  <tb-popup open="{{popup.toolPopupOpen}}" name="toolPopupOpen" bind:show="popupChange"
+            bind:hide="popupChange">
+    <view class="toolPopup">
+      <block wx:for="{{popup.toolPopupData.data}}" wx:key="{{item}}">
+        <view class="item" @tap="toolPopupItemTap({{popup.toolPopupData.type}},{{item}})">{{item}}</view>
+      </block>
+    </view>
+  </tb-popup>
+  <tb-popup open="{{popup.listPopupOpen}}" name="listPopupOpen" bind:show="popupChange"
+            bind:hide="popupChange">
+    <view class="listPopup">
+      <view class="item" @tap="listPopupItemTap('ml',{{popup.listPopupData.data}})"
+            wx:if="{{popup.listPopupData.type==='ml'}}">
+        <icon class="iconfont icon-linkman_icon_mail_de icon"></icon>
+        <text>发邮件</text>
+      </view>
+      <view class="item" @tap="listPopupItemTap('tel',{{popup.listPopupData.data}})"
+            wx:if="{{popup.listPopupData.type==='tel'}}">
+        <icon class="iconfont icon-linkman_icon_call_de icon"></icon>
+        <text>打电话</text>
+      </view>
+      <view class="item" @tap="listPopupItemTap('copy',{{popup.listPopupData.data}})">
+        <icon class="iconfont icon-contact_menu_icon_co icon"></icon>
+        <text>粘贴</text>
+      </view>
+    </view>
+  </tb-popup>
 </template>
 
 <script>
   import wepy from 'wepy'
   import BaseMixin from '../../../mixins/base'
+  import PopupMixin from '../../../mixins/popup'
   import {twCallBeanPromise} from '../../../utils/twmodule'
   import {defaultErrors} from '../../../utils/utils'
 
   export default class AddressDetail extends wepy.page {
-    mixins = [BaseMixin]
+    mixins = [BaseMixin, PopupMixin]
     config = {
       navigationBarTitleText: '',
       usingComponents: {
         'wxc-flex': '../../../components/minui/wxc-flex/index',
         'wxc-avatar': '../../../components/minui/wxc-avatar/index',
-        'tb-list-item': '../../../components/tbui/tb-list-item/index'
+        'tb-popup': '../../../components/tbui/tb-popup/index'
       },
       enablePullDownRefresh: true,
       backgroundTextStyle: `dark`
     }
     components = {}
     data = {
-      detailInfo: {}
+      detailInfo: {},
+      popup: {
+        toolPopupData: {
+          type: null,
+          data: null
+        },
+        toolPopupOpen: false,
+        listPopupOpen: false,
+        listPopupData: {
+          type: null,
+          data: null
+        }
+      }
     }
     computed = {}
-    methods = {}
+    methods = {
+      toolItemTap(type) {
+        if (type === 'ml') {
+          if (this.isArrayNotNull(this.detailInfo.emails)) {
+            this.popup.toolPopupData.type = type
+            this.popup.toolPopupData.data = []
+            this.each(this.detailInfo.emails, (ml, i) => {
+              if (ml.mail) {
+                this.popup.toolPopupData.data.push(ml.mail)
+              }
+            })
+            this.$apply()
+            this.openPopup('toolPopupOpen')
+          } else {
+            wepy.showToast({title: '邮件地址为空,不能发送邮件!!!', icon: 'none'})
+          }
+        } else if (type === 'tel') {
+          if (this.isArrayNotNull(this.detailInfo.phones)) {
+            this.popup.toolPopupData.type = type
+            this.popup.toolPopupData.data = []
+            this.each(this.detailInfo.phones, (phone, i) => {
+              if (phone.phone) {
+                this.popup.toolPopupData.data.push(phone.phone)
+              }
+            })
+            this.$apply()
+            this.openPopup('toolPopupOpen')
+          } else {
+            wepy.showToast({title: '电话号码为空,不能打电话!!!', icon: 'none'})
+          }
+        }
+      },
+      toolPopupItemTap(type, data) {
+        if (type === 'ml') {
+          let params = {
+            address: data,
+            name: this.detailInfo.name
+          }
+          this.loadPage(`/pages/mail/write/write?type=sendMail&data=${JSON.stringify(params)}`)
+        } else if (type === 'tel') {
+          if (data) {
+            wx.makePhoneCall({phoneNumber: data})
+          }
+        }
+      },
+      listItemTap(type, data) {
+        if (type && data) {
+          this.popup.listPopupData.type = type
+          this.popup.listPopupData.data = data
+          this.$apply()
+          this.openPopup('listPopupOpen')
+        }
+      },
+      listPopupItemTap(type, data) {
+        let _this = this
+        if (type === 'ml') {
+          let params = {
+            address: data,
+            name: this.detailInfo.name
+          }
+          this.loadPage(`/pages/mail/write/write?type=sendMail&data=${JSON.stringify(params)}`)
+        } else if (type === 'tel') {
+          if (data) {
+            wx.makePhoneCall({phoneNumber: data})
+          }
+        } else if (type === 'copy') {
+          if (data) {
+            wx.setClipboardData({
+              data: data,
+              success() {
+                _this.closePopup('listPopupOpen')
+                wepy.showToast({title: '粘贴成功'})
+              },
+              fail() {
+                wepy.showToast({title: '粘贴失败'})
+              }
+            })
+          }
+        }
+      }
+    }
 
     onShow() {
     }
@@ -189,11 +334,13 @@
     onLoad(options) {
       let self = this
       if (options && options.id && options.type) {
+        wepy.showLoading({title: '加载中...'})
         self.getAddressDetail(options.type, options.id).then((data) => {
           this.detailInfo = data
           this.$apply()
-          console.log(data)
+          wepy.hideLoading()
         }).catch((e) => {
+          wepy.hideLoading()
           wepy.showToast({
             title: e.message,
             icon: 'none',
@@ -347,7 +494,7 @@
               this.each(src.accounts, (ml, i) => {
                 if (ml.domain && ml.username) {
                   let temp = {
-                    mail: `${ml.domain}@${ml.username}`,
+                    mail: `${ml.username}@${ml.domain}`,
                     type: ml.accounttype || 0
                   }
                   dist.emails.push(temp)

@@ -119,6 +119,7 @@
   import BaseMixin from '../../../mixins/base'
   import PopupMixin from '../../../mixins/popup'
   import FromMixin from '../../../mixins/form'
+  import CommonMixin from '../../../mixins/common'
   import UploadFileMixin from '../../../mixins/uploadFile'
   import {sendMail, twCallBeanPromise} from '../../../utils/twmodule'
   import {bytesToSize, getPhotoByFileType} from '../../../utils/utils'
@@ -126,7 +127,7 @@
   import onfire from '../../../utils/onfire.min'
 
   export default class Write extends wepy.page {
-    mixins = [BaseMixin, PopupMixin, FromMixin, UploadFileMixin]
+    mixins = [BaseMixin, PopupMixin, FromMixin, UploadFileMixin, CommonMixin]
     config = {
       navigationBarTitleText: '写邮件',
       usingComponents: {
@@ -335,8 +336,18 @@
       console.log('write.onSHow')
     }
 
-    onLoad() {
+    onLoad(options) {
       this.subscription()
+      if (options) {
+        try {
+          if (options.data) {
+            let data = JSON.parse(options.data)
+            this.forward(options.type, data)
+          }
+        } catch (e) {
+
+        }
+      }
     }
 
     onUnload(e) {
@@ -451,10 +462,114 @@
               text = ad.name
             }
             component.setTag(id, text)
-
           })
         }
       }
     }
+
+    /**
+     * 邮件转发
+     * @param type
+     * @param data
+     */
+    forward(type, data) {
+      if (type === 'sendMail' && data && data.address) {
+        let fd = [{
+          type: 'address',
+          name: data.name,
+          emails: [{address: data.address}]
+        }]
+        this.setAddress(fd, 'tos')
+      } else if (type === 'forwardAttach' && data && this.isArrayNotNull(data.attaches)) {
+        this.addAttaches(data.attaches, 'netDisk')
+      } else if (type === 'mailForward' && data && data.id) {
+
+      }
+    }
+
+    /**
+     * 处理邮件转发
+     * @param mailId
+     * @param password
+     */
+    handleMailForward(mailId, password) {
+      this.getMailById(mailId, password).then((mail) => {
+        wepy.setNavigationBarTitle({title: '转发邮件'})
+        let subject = 'Fwd:' + mail.subject || ''
+        this.mail.subject = subject
+      })
+    }
+
+    /**
+     * 生成原邮件信息 html
+     * @param mail
+     */
+    /*createMailSourceHtml(mail) {
+      if (mail) {
+        // 处理收件人、抄送和密送
+        let tos = mail.tos
+        let vccs = mail.ccs
+        let bccs = mail.bccs
+        let tosStr = ''
+        if (tos && tos.length > 0) {
+          for (var i = 0, len = tos.length; i < len; i++) {
+            var to = tos[i];
+            var temp = "";
+            if (obj) {
+              if (obj.address && obj.address.indexOf('@') === -1) {
+                temp = '"' + obj.nickname + '"';
+              } else {
+                temp = '"' + obj.nickname + '"&lt;' + obj.address + '&gt;';
+              }
+            }
+
+            tos_str += (i == len - 1) ? temp : temp + ',';
+          }
+        }
+        var ccs_str = '';
+        if (ccs && ccs.length > 0) {
+          for (var i = 0, len = ccs.length; i < len; i++) {
+            var cc = ccs[i];
+            var temp = "";
+            if (obj) {
+              if (obj.address && obj.address.indexOf('@') === -1) {
+                temp = '"' + obj.nickname + '"';
+              } else {
+                temp = '"' + obj.nickname + '"&lt;' + obj.address + '&gt;';
+              }
+            }
+            ccs_str += (i == len - 1) ? temp : temp + ',';
+          }
+        }
+        var attachs = mail.attachs;
+        attachs && attachs.length ?
+          (function () {
+            var files = [];
+            for (var i = 0, leni = attachs.length; i < leni; i++) {
+              var at = attachs[i];
+              if (!at.filename) continue;
+              var file = {id: at.atid, name: at.filename, size: at.len, mailId: mail.mailid};
+              files.push(file);
+            }
+            v.addAttaches(files, 'netDisk');
+          }()) : null;
+        var sendtime = mail.date;
+        // 生成原邮件信息
+        var origin_mail_msg = ['<div style="font-family: Microsoft Yahei,Tahoma,Arial;font-size: 13px;margin-tbcc: 5px;padding: 10px;background: #efefef;"></div>'].join('');
+        var line = '<div><div style="font-size: 13px;padding:2px 0 2px 0;">------------------ 原邮件内容 ------------------</div></div>';
+        var from_obj = tww_accountString2Obj(mail.from.mailaddress);
+        var str_from = ['<div style="word-break: break-all;background:#efefef;padding: 3px 0;"><b>发件人：</b>"', from_obj.nickname, '"&lt;', from_obj.address, '&gt;', '<br></div>'].join('');
+        var str_tos = ['<div style="word-break: break-all;background:#efefef;padding: 3px 0;"><b>收件人：</b>', tos_str, '<br></div>'].join('');
+        var str_ccs = ccs ? ['<div style="word-break: break-all;background:#efefef;padding: 3px 0;"><b>抄送：</b>', ccs_str, '<br></div>'].join('') : '';
+        var str_sendtime = ['<div style="word-break: break-all;background:#efefef;padding: 3px 0;"><b>发送时间：</b>', sendtime, '<br></div>'].join('');
+        var str_subject = ['<div style="word-break: break-all;background:#efefef;padding: 3px 0;"><b>主题：</b>', mail.subject, '<br></div>'].join('');
+        var $e = $(origin_mail_msg);
+        $e.append(str_from).append(str_tos).append(str_ccs)
+          .append(str_sendtime).append(str_subject);
+        var msg = $e[0].outerHTML;
+        return line + msg;
+      }
+      return "";
+    }*/
   }
 </script>

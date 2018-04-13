@@ -1,0 +1,220 @@
+<style lang="less">
+  .avatar {
+    display: block;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .subTitle {
+    color: #49a9f2;
+  }
+
+  .float-button {
+    right: 30px !important;
+  }
+</style>
+<template>
+  <wxc-tab bind:tabchange="tabChange" component-id="c5" animate="{{true}}" active-text-color="#49A9F2"
+           active-line-color="#49A9F2" full-screen>
+    <wxc-tab-panel wx:for="{{tabs}}" wx:for-item="tab" wx:key="{{tab.id}}" tab-index="{{index}}" component-id="c5"
+                   label="{{tab.title}}">
+      <tb-list-item has-left @tap.stop="" wx:if="{{tab.dirsHistory.length>1}}" sub-title="返回上一级"
+                    sub-title-class="subTitle" @tap.stop="backNetDiskFolderTap">
+        <view slot="left">
+          <wxc-avatar class="avatar" mold="square" src="{{netDiskMixin.backIcon}}"></wxc-avatar>
+        </view>
+      </tb-list-item>
+      <tb-radio-group name="netDiskSelected" model="{{netDiskSelected}}" bind:change="formChange">
+        <tb-list-item has-left has-right title="{{rootDir.name}}">
+          <view slot="left">
+            <wxc-avatar class="avatar" mold="square" src="{{rootDir.icon}}"></wxc-avatar>
+          </view>
+          <view slot="right" catch:tap="rightTap">
+            <tb-radio value="{{rootDir}}" color="#49A9F2"></tb-radio>
+          </view>
+        </tb-list-item>
+        <block wx:for="{{tab.content.dirs[tab.dirId]}}" wx:key="{{item.id}}">
+          <tb-list-item has-left has-right title="{{item.name}}" @tap.stop="enterNetDiskFolderTap({{item.id}})">
+            <view slot="left">
+              <wxc-avatar class="avatar" mold="square" src="{{item.icon}}"></wxc-avatar>
+            </view>
+            <view slot="right" catch:tap="rightTap">
+              <tb-radio value="{{item}}" color="#49A9F2"></tb-radio>
+            </view>
+          </tb-list-item>
+        </block>
+      </tb-radio-group>
+    </wxc-tab-panel>
+  </wxc-tab>
+  <tb-float-button buttons="{{floatButton}}" position="bottomRight" class-name="float-button"
+                   bind:buttonTap="floatButtonTap"></tb-float-button>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import BaseMixin from '../../../mixins/base'
+  import NetDiskMixin from '../../../mixins/netDisk'
+  import CommonMixin from '../../../mixins/common'
+  import PullDownRefreshMixin from '../../../mixins/pullDownRefresh'
+  import LoadMoreMixin from '../../../mixins/loadMore'
+  import FormMixin from '../../../mixins/form'
+  import onfire from '../../../utils/onfire.min'
+
+  export default class NetDiskDirSelector extends wepy.page {
+    mixins = [BaseMixin, NetDiskMixin, CommonMixin, PullDownRefreshMixin, FormMixin, LoadMoreMixin]
+    config = {
+      navigationBarTitleText: '网盘文件夹选择',
+      usingComponents: {
+        'wxc-flex': '../../../components/minui/wxc-flex/index',
+        'wxc-tab': '../../../components/minui/wxc-tab/index',
+        'wxc-tab-panel': '../../../components/minui/wxc-tab/panel',
+        'wxc-tab-label': '../../../components/minui/wxc-tab/label',
+        'wxc-avatar': '../../../components/minui/wxc-avatar/index',
+        'tb-list-item': '../../../components/tbui/tb-list-item/index',
+        'tb-radio-group': '../../../components/tbui/tb-radio/tb-radio-group',
+        'tb-radio': '../../../components/tbui/tb-radio/tb-radio',
+        'tb-float-button': '../../../components/tbui/tb-float-button/index'
+      },
+      enablePullDownRefresh: true,
+      backgroundTextStyle: `dark`
+    }
+    components = {}
+    data = {
+      tabs: [
+        {
+          title: '公共',
+          content: {dirs: {}, files: []},
+          id: 'sys',
+          dirId: '0',
+          fromIndex: 0,
+          fileCallBean: null,
+          dirCallBean: 'netdisk.sys.dir.getsublist',
+          dirsHistory: ['0'],
+          config: {
+            dirPidKey: 'pndid',
+            dirIdKey: 'ndid',
+            dirNameKey: 'name',
+            dirPhoto: '/assets/images/attachment_icon_folder_m_default.png',
+            dirObjKey: 'dirs',
+            fileObjKey: 'files',
+            fileIdKey: 'nfid'
+          }
+        },
+        {
+          title: '个人',
+          content: {dirs: {}, files: []},
+          id: 'personal',
+          dirId: '0',
+          fromIndex: 0,
+          fileCallBean: null,
+          dirCallBean: 'netdisk.personal.dir.getsublist',
+          dirsHistory: ['0'],
+          config: {
+            dirPidKey: 'pndid',
+            dirIdKey: 'ndid',
+            dirNameKey: 'name',
+            dirPhoto: '/assets/images/attachment_icon_folder_m_default.png',
+            dirObjKey: 'dirs',
+            fileObjKey: 'files',
+            fileIdKey: 'nfid'
+          }
+        }
+      ],
+      netDiskSelected: {},
+      floatButton: [
+        {
+          id: 'ok',
+          label: '确定选中',
+          icon: 'icon-nav_btn_ok_default',
+          fontIcon: true
+        },
+        {
+          id: 'cancel',
+          label: '取消',
+          icon: 'icon-nav_btn_cancel_defau',
+          fontIcon: true
+        }
+      ],
+      params: {
+        selector: null,
+        page: null,
+        action: null
+      },
+      rootDir: {
+        id: '0',
+        name: '根目录',
+        icon: '/assets/images/attachment_icon_folder_m_default.png'
+      }
+    }
+    computed = {}
+    watch = {
+      netDiskSelected(newVal) {
+        console.log('netDiskSelected', newVal)
+      }
+    }
+    methods = {
+      rightTap() {
+      },
+      fileItemTap(item) {
+        if (!item || !item.id) {
+          return
+        }
+        if (this.netDiskSelected) {
+          let check = false
+          let index = -1
+          this.each(this.netDiskSelected, (s, i) => {
+            if (s && s.id === item.id) {
+              check = true
+              index = i
+            }
+          })
+          if (check) {
+            this.netDiskSelected.splice(index, 1)
+          } else {
+            this.netDiskSelected.push(item)
+          }
+        } else {
+          this.netDiskSelected = [item]
+        }
+      },
+      floatButtonTap(e) {
+        let button = e.detail.button
+        if (!button) {
+          return
+        }
+        if (button.id === 'ok') {
+          let data = {
+            selector: this.params.selector,
+            page: this.params.page,
+            btn: 'ok',
+            action: this.params.action,
+            data: {dir: this.netDiskSelected, tab: this.tabs[this.currentTabIndex]}
+          }
+          onfire.fire('netDiskDirSelector', data)
+          this.backPage()
+        } else if (button.id === 'cancel') {
+          this.backPage()
+        } else if (button.id === 'search') {
+
+        }
+      }
+    }
+
+    onShow() {
+    }
+
+    onLoad(params) {
+      if (params) {
+        if (params.selector) {
+          this.params.selector = params.selector
+        }
+        if (params.page) {
+          this.params.page = params.page
+        }
+        if (params.action) {
+          this.params.action = params.action
+        }
+      }
+    }
+  }
+</script>

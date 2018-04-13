@@ -6,7 +6,7 @@
       <view class="tab__navbar-wrap" style="border-bottom: 2rpx solid {{lineColor}};">
         <view class="tab__navbar-item tab__navbar-item--default" wx:for="{{tabs}}" wx:for-item="tab" wx:key="index"
               data-key="{{tab.key}}" data-idx="{{index}}" bindtap="onSwitch"
-              style="width: {{width}}rpx; color:{{index === activeKey ? activeTextColor : textColor}}">
+              style="min-width: {{width}}rpx; color:{{index === activeKey ? activeTextColor : textColor}}">
           <label class="tab__navbar-title">{{tab.label}}</label>
         </view>
 

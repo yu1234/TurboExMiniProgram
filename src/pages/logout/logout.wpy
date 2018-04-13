@@ -1,0 +1,167 @@
+<style lang="less">
+  @import "../../styles/them";
+
+  page {
+    height: 100%;
+    background-color: @primaryColor;
+  }
+
+  .box {
+    display: inline-block;
+    min-height: 15rem;
+    width: 85%;
+    .head {
+      position: absolute;
+      z-index: 1;
+      width: 85%;
+      top: 4rem;
+      .avatar {
+        display: block;
+        width: 6rem;
+        height: 6rem;
+      }
+      .head-photo-shadow {
+        box-shadow: 0 3px 10px rgba(73, 169, 242, .156863), 0 3px 10px rgba(73, 169, 242, .227451);
+      }
+    }
+    .content {
+      position: relative;
+      top: 4.5rem;
+      z-index: 0;
+      display: inline-block;
+      min-height: 10rem;
+      width: 100%;
+      background-color: white;
+      border-radius: .8rem;
+      .list {
+        margin-top: 3rem;
+        text-align: center;
+        .name {
+          font-size: 1.2rem;
+        }
+        .remark {
+          color: rgb(153, 153, 153);
+          font-size: .75rem;
+        }
+        .logout-btn {
+          margin: 1rem 1.5rem 1.5rem 1.5rem;
+          height: 2rem;
+          button {
+            background-color: @primaryColor;
+            border-radius: 1rem;
+            color: white;
+          }
+        }
+      }
+    }
+  }
+</style>
+<template>
+  <view class="text-center" style="margin-top:15%">
+    <view class="box text-center">
+      <view class="head">
+        <wxc-flex main="center" cross="center">
+          <view>
+            <wxc-avatar class="avatar" image-class="head-photo-shadow"
+                        src="{{headerPhoto}}"></wxc-avatar>
+          </view>
+        </wxc-flex>
+      </view>
+      <view class="content">
+        <view class="list">
+          <wxc-flex dir="top">
+            <view class="name">
+              <text>{{name}}</text>
+            </view>
+            <view class="remark">
+              <icon class="iconfont icon-log_out_icon_log_out" style="margin-right: .3rem"></icon>
+              <text>已退出登录</text>
+            </view>
+            <view>
+              <view class="logout-btn">
+                <button @tap="logout">跳转到登录({{time}})</button>
+              </view>
+            </view>
+          </wxc-flex>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import BaseMixin from '../../mixins/base'
+  import {twCallBeanPromise} from '../../utils/twmodule'
+  import {setSessionId} from '../../config'
+
+  export default class Index extends wepy.page {
+    config = {
+      navigationBarTitleText: '登出',
+      navigationBarBackgroundColor: '#49A9F2',
+      navigationBarTextStyle: 'white',
+      usingComponents: {
+        'wxc-flex': '../../components/minui/wxc-flex/index',
+        'wxc-avatar': '../../components/minui/wxc-avatar/index'
+      }
+    }
+    components = {}
+
+    mixins = [BaseMixin]
+
+    data = {
+      headerPhoto: null,
+      name: '',
+      time: 10,
+      intervalObj: null
+    }
+
+    computed = {}
+
+    methods = {
+      logout() {
+        this.logout()
+      }
+    }
+
+    events = {}
+
+    onLoad() {
+      setSessionId(null)
+      this.headerPhoto = this.defaultHeaderPhoto
+      let userInfo = this.$parent.globalData.userInfo
+      if (userInfo && userInfo.headPhoto) {
+        this.headerPhoto = userInfo.headPhoto
+      }
+      if (userInfo && userInfo.name) {
+        this.name = userInfo.name
+      }
+      this.$apply()
+      this.intervalObj = setInterval(() => {
+        this.time = this.time - 1
+        this.$apply()
+        if (this.time < 0) {
+          if (this.intervalObj) {
+            clearInterval(this.intervalObj)
+            this.intervalObj = null
+          }
+          this.logout()
+        }
+      }, 1000)
+    }
+
+    onShow() {
+    }
+
+    logout() {
+      if (this.intervalObj) {
+        clearInterval(this.intervalObj)
+      }
+      twCallBeanPromise('web.logout', {}).then((ret) => {
+        this.redirectPage('/pages/index')
+      }).catch((res) => {
+        this.redirectPage('/pages/index')
+      })
+    }
+  }
+</script>

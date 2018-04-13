@@ -25,7 +25,7 @@ exports.default = Component({
     },
     confirmColor: {
       type: String,
-      value: '#ff5777'
+      value: '#49A9F2'
     },
     cancelText: {
       type: String
@@ -48,8 +48,10 @@ exports.default = Component({
       var popupComponent = this.selectComponent('.popup');
       popupComponent && popupComponent.hide();
     },
-    onContentTap: function onContentTap() {},
+    onContentTap: function onContentTap() {
+    },
     cancelCallback: function cancelCallback() {
+      this.hide()
       this.triggerEvent('cancel');
     },
     confirmCallback: function confirmCallback() {

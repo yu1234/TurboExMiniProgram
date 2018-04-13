@@ -1,0 +1,140 @@
+<style lang="less">
+  .list {
+    .item {
+      border-bottom: .8px #e5e5e5 solid;
+    }
+  }
+
+</style>
+<template>
+  <view class="list">
+    <block wx:for="{{downFiles}}" wx:key="{{item.id}}">
+      <tb-list-item item-class="item" title="{{item.name}}" text="{{item.formatSize}}{{decode.emsp}}{{item.formatDate}}"
+                    has-left @tap.stop="fileItemTap({{item}})">
+        <view style="height: 2.5rem" slot="left">
+          <wxc-avatar class="tb-head-avatar" mold="square" src="{{item.icon}}">
+          </wxc-avatar>
+        </view>
+      </tb-list-item>
+    </block>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import BaseMixin from '../../mixins/base'
+  import PreviewMixin from '../../mixins/preview'
+  import {defaultErrors} from '../../utils/utils'
+
+  export default class Download extends wepy.page {
+    config = {
+      navigationBarTitleText: '下载文件管理',
+      usingComponents: {
+        'wxc-avatar': '../../components/minui/wxc-avatar/index',
+        'tb-list-item': '../../components/tbui/tb-list-item/index'
+      }
+    }
+    components = {}
+
+    mixins = [BaseMixin, PreviewMixin]
+
+    data = {downFiles: []}
+
+    computed = {}
+
+    methods = {
+      fileItemTap(item) {
+        let _this = this
+        wepy.showActionSheet({
+          itemList: ['打开', '复制文件名'],
+          success(obj) {
+            if (obj.tapIndex === 0) {
+              let params = {
+                path: item.path,
+                name: item.name
+              }
+              _this.filePreview(params)
+            } else if (obj.tapIndex === 1) {
+              wx.setClipboardData({
+                data: item.name,
+                success() {
+                  wepy.showToast({
+                    title: '复制成功'
+                  })
+                },
+                fail() {
+                  wepy.showToast({
+                    title: '复制失败,请重试',
+                    icon: 'none'
+                  })
+                }
+              })
+            }
+          }
+        })
+      }
+    }
+
+    events = {}
+
+    onLoad() {
+      let downFile = wx.getStorageSync('downFile')
+      if (downFile) {
+        let checkes = []
+        this.each(downFile, (v, k) => {
+          if (v.id) {
+            checkes.push(this.checkDownloadFile(v.id))
+          }
+        })
+        Promise.all(checkes).then((files) => {
+          if (this.isArrayNotNull(files)) {
+            this.downFiles = this.concat([], files)
+            this.downFiles.sort(this.sortDateDesc)
+            this.$apply()
+            console.log(this.downFiles)
+          }
+        })
+      }
+    }
+
+    onShow() {
+    }
+
+    sortDateDesc(a, b) {
+      let dateA = a.date
+      let dateB = b.date
+      if (!dateA) {
+        return 1
+      } else if (!dateB) {
+        return -1
+      } else if (!dateA && !dateB) {
+        return 0
+      } else {
+        let aD = new Date(dateA)
+        let bD = new Date(dateB)
+        return bD.getTime() - aD.getTime()
+      }
+    }
+
+    checkDownloadFile(id) {
+      return new Promise((resolve, reject) => {
+        let downFiles = wx.getStorageSync('downFile')
+        let file = downFiles[id]
+        if (file) {
+          wx.getFileInfo({
+            filePath: file.path,
+            success() {
+              resolve(file)
+            },
+            fail() {
+              debugger
+              delete downFiles[id]
+              wx.setStorageSync('downFile', downFiles)
+              reject(defaultErrors.customError('文件不可用'))
+            }
+          })
+        }
+      })
+    }
+  }
+</script>
