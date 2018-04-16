@@ -42,6 +42,7 @@ export default class CommonMixin extends wepy.mixin {
           if (ret.beanparam.data && ret.beanparam.data.mailid) {
             let data = ret.beanparam.data
             console.log(data)
+            data.password = password
             this.formatMailObj(data).then((mail) => {
               resolve(mail)
             })
@@ -84,6 +85,7 @@ export default class CommonMixin extends wepy.mixin {
         })
         let mail = {
           id: mailObj.mailid,
+          password: mailObj.password,
           address: from.account || '',
           title: `${from.name || (from.account || '暂无')}`,
           subject: mailObj.subject,
@@ -93,7 +95,8 @@ export default class CommonMixin extends wepy.mixin {
           formatTime: strFormatDate(mailObj.rcpttime, 'yyyy/MM/dd hh:mm'),
           contents: contents,
           content: content,
-          attaches: this.attachesFormat(mailObj.attachs, mailObj.mailid)
+          attaches: this.attachesFormat(mailObj.attachs, mailObj.mailid),
+          name: `${from.name || ''}`
         }
         this.getSysUserInfo([mail.address]).then((map) => {
           if (map[mail.address] && map[mail.address].headerPhoto) {
@@ -379,7 +382,8 @@ export default class CommonMixin extends wepy.mixin {
             id: attach.atid,
             name: attach.filename || '暂无',
             size: attach.len || 0,
-            formatSize: bytesToSize(attach.len || 0)
+            formatSize: bytesToSize(attach.len || 0),
+            mailId: mailId
           }
           let fileType = this.getFileType(temp.name)
           let p = {mailid: mailId, atid: attach.atid, filename: temp.name}
@@ -616,6 +620,7 @@ export default class CommonMixin extends wepy.mixin {
 
     })
   }
+
   /**
    * 其他文件预览处理
    */

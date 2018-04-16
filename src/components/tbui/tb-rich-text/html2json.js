@@ -138,6 +138,7 @@ function html2json(html, bindName) {
 
       // 处理font标签样式属性
       if (node.name === 'font') {
+        node.name = 'span'
         var fontSize = ['x-small', 'small', 'medium', 'large', 'x-large', 'xx-large', '-webkit-xxx-large'];
         var styleAttrs = {
           'color': 'color',
@@ -175,6 +176,9 @@ function html2json(html, bindName) {
       //debug(tag);
       // merge into parent tag
       var node = bufArray.shift();
+      if (tag === 'font') {
+        tag = 'span'
+      }
       if (node.name !== tag) console.error('invalid state: mismatch end tag');
 
       //当有缓存source资源时于于video补上src资源
@@ -187,6 +191,9 @@ function html2json(html, bindName) {
         results.children.push(node);
       } else {
         var parent = bufArray[0];
+        if (parent.name === 'colgroup' && bufArray.length > 1) {
+          parent = bufArray[1];
+        }
         if (parent.children === undefined) {
           parent.children = [];
         }

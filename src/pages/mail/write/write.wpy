@@ -25,6 +25,13 @@
       }
     }
   }
+
+  .attaches {
+    .item {
+      margin-top: .5rem;
+      background-color: rgb(238, 238, 238);
+    }
+  }
 </style>
 <template>
   <tb-nav has-right>
@@ -64,17 +71,20 @@
     <view class="from-item">
       <textarea style="width: 100%;" maxlength="{{-1}}" bindinput="mailContentChange"></textarea>
     </view>
+    <view class="from-item" wx:if="{{forwardMailContent}}">
+      <tb-rich-text nodes="{{forwardMailContent}}"></tb-rich-text>
+    </view>
     <view style="padding: 0 .5rem .2rem .5rem" class="attaches" wx:if="{{mail.attachs&&mail.attachs.length}}">
       <block wx:for="{{mail.attachs}}" wx:key="{{item.id}}">
-        <tb-list-item item-class="item" title="{{item.filename}}" text="{{item.formatSize}}" has-left has-right
-                      @tap.stop="attachItemTap('item',{{item}})">
+        <tb-list-item item-class="item" title="{{item.filename}}" text="{{item.size>0?item.formatSize:''}}" has-left
+                      has-right @tap.stop="attachItemTap('item',{{item}})">
           <view style="height: 2.5rem" slot="left">
             <wxc-avatar class="tb-head-avatar" mold="square" src="{{item.icon}}">
             </wxc-avatar>
           </view>
           <view slot="right" style="padding-right: .5rem">
-            <icon class="iconfont icon-nav_btn_next" style="font-size: 1.2rem"
-                  @tap.stop="attachItemTap('icon',{{item}})"></icon>
+            <icon class="iconfont icon-nav_btn_cancel" style="font-size: 1.2rem"
+                  @tap.stop="removeAttach({{index}},{{item.id}})"></icon>
           </view>
         </tb-list-item>
       </block>
@@ -137,7 +147,8 @@
         'tb-input': '../../../components/tbui/tb-input/index',
         'wxc-flex': '../../../components/minui/wxc-flex/index',
         'wxc-avatar': '../../../components/minui/wxc-avatar/index',
-        'tb-popup': '../../../components/tbui/tb-popup/index'
+        'tb-popup': '../../../components/tbui/tb-popup/index',
+        'tb-rich-text': '../../../components/tbui/tb-rich-text/index'
       }
     }
     components = {}
@@ -176,7 +187,8 @@
         }],
         attachs: []
       },
-      attachesMap: {}
+      attachesMap: {},
+      forwardMailContent: null
     }
     computed = {}
     watch = {
@@ -294,6 +306,9 @@
           })
           return
         }
+        if (this.forwardMailContent) {
+          this.mail.contents[0].content = this.mail.contents[0].content + this.forwardMailContent
+        }
         wepy.showLoading({
           title: '邮件发送中...'
         })
@@ -329,6 +344,14 @@
         if (name) {
           this.loadPage(`/pages/address/selector/selector?selector=${name}&&page=write`)
         }
+      },
+      removeAttach(index, id) {
+        if (this.mail.attachs && this.mail.attachs.length > index) {
+          if (this.mail.attachs[index].id === id) {
+            this.attachesMap[id] = false
+            this.mail.attachs.splice(index, 1)
+          }
+        }
       }
     }
 
@@ -363,7 +386,6 @@
       })
       let addressSelector = onfire.on('addressSelector', (option) => {
         if (option && option.page === 'write' && option.action === 'ok' && this.isArrayNotNull(option.data)) {
-          console.log(option)
           this.setAddress(option.data, option.selector)
         }
       })
@@ -424,9 +446,10 @@
               o.icon = getPhotoByFileType(filetype)
             } else if (from === 'upload') {
               o.file = ['$$temp$', file.id, '$', filetype, '$$', '&wid=', getWid()].join('')
-              o.icon = file.icon || getPhotoByFileType()
+              o.icon = file.icon || getPhotoByFileType(filetype)
             } else if (from === 'mailAttach') {
               o.file = file.resourceid
+              o.icon = file.icon || getPhotoByFileType(filetype)
             }
             this.mail.attachs.push(o)
             this.attachesMap[file.id] = true
@@ -481,9 +504,17 @@
         }]
         this.setAddress(fd, 'tos')
       } else if (type === 'forwardAttach' && data && this.isArrayNotNull(data.attaches)) {
+        // data template {id:xxx,password:xxx}
         this.addAttaches(data.attaches, 'netDisk')
       } else if (type === 'mailForward' && data && data.id) {
-
+        // data template {id:xxx,password:xxx}
+        this.handleMailForward(data.id, data.password)
+      } else if (type === 'mailReply' && data && data.id) {
+        // data template {id:xxx,password:xxx}
+        this.handleMailReply(data.id, data.password)
+      } else if (type === 'mailAttachForward' && data) {
+        // data template [{id:xxx,subject:xxx}]
+        this.handleMailAttachForward(data)
       }
     }
 
@@ -497,79 +528,119 @@
         wepy.setNavigationBarTitle({title: '转发邮件'})
         let subject = 'Fwd:' + mail.subject || ''
         this.mail.subject = subject
+        let mailSourceHtml = this.createMailSourceHtml(mail)
+        let forwardMailContent = mailSourceHtml + mail.content
+        this.forwardMailContent = forwardMailContent
+        this.$apply()
       })
+    }
+
+    /**
+     * 处理邮件回复
+     * @param mailId
+     * @param password
+     */
+    handleMailReply(mailId, password) {
+      this.getMailById(mailId, password).then((mail) => {
+        wepy.setNavigationBarTitle({title: '回复邮件'})
+        let fd = []
+        this.each(mail.tos, (to, i) => {
+          if (to.address) {
+            let temp = {
+              type: 'address',
+              name: to.name,
+              emails: [{address: to.address}]
+            }
+            fd.push(temp)
+          }
+        })
+        this.setAddress(fd, 'tos')
+        let subject = 'Re:' + mail.subject || ''
+        this.mail.subject = subject
+        let mailSourceHtml = this.createMailSourceHtml(mail)
+        let forwardMailContent = mailSourceHtml + mail.content
+        this.forwardMailContent = forwardMailContent
+        this.$apply()
+      })
+    }
+
+    /**
+     * 邮件附件转发处理
+     * @param mailIds
+     */
+    handleMailAttachForward(data) {
+      if (this.isArrayNotNull(data)) {
+        wepy.setNavigationBarTitle({title: '转发邮件'})
+        var subjects = []
+        var files = []
+        var uid = this.$parent.globalData.userInfo.uid
+        this.each(data, (ml, i) => {
+          let subject = 'Fwd:' + (!ml.subject ? '（没有主题）' : ml.subject)
+          subjects.push(subject)
+          let paramsCallbean = {'id': uid || '', 'mailid': ml.id}
+          let resourceid = ['$$callbean$mail.store.getsource$', JSON.stringify(paramsCallbean).replace(/\"/g, '\''), '$eml$$'].join('')
+          let filename = subject + '.eml'
+          let file = {id: ml.id, resourceid: resourceid, name: filename}
+          files.push(file)
+        })
+        this.addAttaches(files, 'mailAttach')
+      }
     }
 
     /**
      * 生成原邮件信息 html
      * @param mail
      */
-    /*createMailSourceHtml(mail) {
+    createMailSourceHtml(mail) {
       if (mail) {
         // 处理收件人、抄送和密送
         let tos = mail.tos
-        let vccs = mail.ccs
-        let bccs = mail.bccs
+        let ccs = mail.ccs
         let tosStr = ''
         if (tos && tos.length > 0) {
-          for (var i = 0, len = tos.length; i < len; i++) {
-            var to = tos[i];
-            var temp = "";
-            if (obj) {
-              if (obj.address && obj.address.indexOf('@') === -1) {
-                temp = '"' + obj.nickname + '"';
-              } else {
-                temp = '"' + obj.nickname + '"&lt;' + obj.address + '&gt;';
+          for (let i = 0, len = tos.length; i < len; i++) {
+            let to = tos[i]
+            let temp = ''
+            if (to) {
+              if (to.address && to.address.indexOf('@') !== -1) {
+                temp = `"${to.name || ''}"&lt;${to.address}&gt;`
+              } else if (to.name) {
+                temp = `"${to.name}"`
               }
             }
 
-            tos_str += (i == len - 1) ? temp : temp + ',';
+            tosStr += (i === len - 1) ? temp : temp + ','
           }
         }
-        var ccs_str = '';
+        let ccsStr = ''
         if (ccs && ccs.length > 0) {
-          for (var i = 0, len = ccs.length; i < len; i++) {
-            var cc = ccs[i];
-            var temp = "";
-            if (obj) {
-              if (obj.address && obj.address.indexOf('@') === -1) {
-                temp = '"' + obj.nickname + '"';
-              } else {
-                temp = '"' + obj.nickname + '"&lt;' + obj.address + '&gt;';
+          for (let i = 0, len = ccs.length; i < len; i++) {
+            let cc = ccs[i]
+            let temp = ''
+            if (cc) {
+              if (cc.address && cc.address.indexOf('@') !== -1) {
+                temp = `"${cc.name || ''}"&lt;${cc.address}&gt;`
+              } else if (cc.name) {
+                temp = `"${cc.name}"`
               }
             }
-            ccs_str += (i == len - 1) ? temp : temp + ',';
+            ccsStr += (i === len - 1) ? temp : temp + ','
           }
         }
-        var attachs = mail.attachs;
-        attachs && attachs.length ?
-          (function () {
-            var files = [];
-            for (var i = 0, leni = attachs.length; i < leni; i++) {
-              var at = attachs[i];
-              if (!at.filename) continue;
-              var file = {id: at.atid, name: at.filename, size: at.len, mailId: mail.mailid};
-              files.push(file);
-            }
-            v.addAttaches(files, 'netDisk');
-          }()) : null;
-        var sendtime = mail.date;
+        let attaches = mail.attaches
+        this.addAttaches(attaches, 'netDisk')
+        let sendTime = mail.time
         // 生成原邮件信息
-        var origin_mail_msg = ['<div style="font-family: Microsoft Yahei,Tahoma,Arial;font-size: 13px;margin-tbcc: 5px;padding: 10px;background: #efefef;"></div>'].join('');
-        var line = '<div><div style="font-size: 13px;padding:2px 0 2px 0;">------------------ 原邮件内容 ------------------</div></div>';
-        var from_obj = tww_accountString2Obj(mail.from.mailaddress);
-        var str_from = ['<div style="word-break: break-all;background:#efefef;padding: 3px 0;"><b>发件人：</b>"', from_obj.nickname, '"&lt;', from_obj.address, '&gt;', '<br></div>'].join('');
-        var str_tos = ['<div style="word-break: break-all;background:#efefef;padding: 3px 0;"><b>收件人：</b>', tos_str, '<br></div>'].join('');
-        var str_ccs = ccs ? ['<div style="word-break: break-all;background:#efefef;padding: 3px 0;"><b>抄送：</b>', ccs_str, '<br></div>'].join('') : '';
-        var str_sendtime = ['<div style="word-break: break-all;background:#efefef;padding: 3px 0;"><b>发送时间：</b>', sendtime, '<br></div>'].join('');
-        var str_subject = ['<div style="word-break: break-all;background:#efefef;padding: 3px 0;"><b>主题：</b>', mail.subject, '<br></div>'].join('');
-        var $e = $(origin_mail_msg);
-        $e.append(str_from).append(str_tos).append(str_ccs)
-          .append(str_sendtime).append(str_subject);
-        var msg = $e[0].outerHTML;
-        return line + msg;
+        let line = '<div><div style="font-size: 13px;padding:2px 0 2px 0;">------------------ 原邮件内容 ------------------</div></div>'
+        let strFrom = `<div style="word-break: break-all;background:#efefef;padding: 3px 0;"><b>发件人：</b>"${mail.name}"&lt;${mail.address}&gt;<br></div>`
+        let strTos = `<div style="word-break: break-all;background:#efefef;padding: 3px 0;"><b>收件人：</b>${tosStr}<br></div>`
+        let strCcs = ccsStr ? `<div style="word-break: break-all;background:#efefef;padding: 3px 0;"><b>抄送：</b>${ccsStr}<br></div>` : ''
+        let strSendtime = `<div style="word-break: break-all;background:#efefef;padding: 3px 0;"><b>发送时间：</b>${sendTime}<br></div>`
+        let strSubject = `<div style="word-break: break-all;background:#efefef;padding: 3px 0;"><b>主题：</b>${mail.subject}<br></div>`
+        let originMailMsg = `<div style="font-family: Microsoft Yahei,Tahoma,Arial;font-size: 13px;margin-tbcc: 5px;padding: 10px;background: #efefef;">${strFrom}${strTos}${strCcs}${strSendtime}${strSubject}</div>`
+        return line + originMailMsg
       }
-      return "";
-    }*/
+      return ''
+    }
   }
 </script>

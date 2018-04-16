@@ -484,4 +484,31 @@ export default class MailOperatorMixin extends wepy.mixin {
       })
     })
   }
+
+  /**
+   * 邮件转发
+   * @param id
+   * @param permitObj
+   */
+  mailForward(id) {
+    if (!id) {
+      let tip = '请选择需转发的邮件'
+      wepy.showToast({title: tip, icon: 'none'})
+      return
+    }
+    let mailPermit = this.$wxpage.selectComponent('#mailPermit')
+    this.checkPreMit('mail.client.get', {mailid: id}, mailPermit).then((r) => {
+      let password = r.password
+      let data = {
+        id: id,
+        password: password
+      }
+      this.loadPage(`/pages/mail/write/write?type=mailForward&data=${JSON.stringify(data)}`)
+    }).catch((e) => {
+      wepy.showToast({
+        title: e.message,
+        icon: 'none'
+      })
+    })
+  }
 }

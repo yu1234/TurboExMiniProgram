@@ -38,7 +38,7 @@ export default class Twrajax {
             icon: 'none',
             complete() {
               setTimeout(() => {
-                wx.redirectTo({
+                wx.reLaunch({
                   url: '/pages/logout/logout'
                 })
               }, 1000)
@@ -51,7 +51,7 @@ export default class Twrajax {
           icon: 'none',
           complete() {
             setTimeout(() => {
-              wx.redirectTo({
+              wx.reLaunch({
                 url: '/pages/logout/logout'
               })
             }, 1000)

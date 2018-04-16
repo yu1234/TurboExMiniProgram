@@ -140,7 +140,7 @@
       this.intervalObj = setInterval(() => {
         this.time = this.time - 1
         this.$apply()
-        if (this.time < 0) {
+        if (this.time <= 0) {
           if (this.intervalObj) {
             clearInterval(this.intervalObj)
             this.intervalObj = null
@@ -158,9 +158,9 @@
         clearInterval(this.intervalObj)
       }
       twCallBeanPromise('web.logout', {}).then((ret) => {
-        this.redirectPage('/pages/index')
+        this.reLaunchPage('/pages/login/login')
       }).catch((res) => {
-        this.redirectPage('/pages/index')
+        this.reLaunchPage('/pages/login/login')
       })
     }
   }

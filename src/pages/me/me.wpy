@@ -21,7 +21,7 @@
     computed = {}
     methods = {
       logout() {
-        this.redirectPage('/pages/logout/logout')
+        this.reLaunchPage('/pages/logout/logout')
       },
       downFile() {
         this.loadPage('/pages/download/download')

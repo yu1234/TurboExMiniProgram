@@ -54,7 +54,11 @@ export default class BaseMixin extends wepy.mixin {
       url: url
     })
   }
-
+  reLaunchPage(url) {
+    wepy.reLaunch({
+      url: url
+    })
+  }
   backPage(delta) {
     wepy.navigateBack({
       delta: delta

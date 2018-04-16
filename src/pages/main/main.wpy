@@ -1,8 +1,8 @@
 <template>
   <view class="tb-content" style="top:.5rem;">
     <view class="tb-card" wx:if="{{cards.ml.count>0}}">
-      <view class="tb-card-content">
-        <wxc-flex>
+      <view class="tb-card-content"  >
+        <wxc-flex @tap="cardTap()">
           <view class="tb-flex-item tb-card-left">
             <icon class="iconfont {{cards.ml.icon}}"></icon>
           </view>
@@ -81,6 +81,9 @@
         if (button && button.id === 'writeMail') {
           this.loadPage('/pages/mail/write/write')
         }
+      },
+      cardTap() {
+        this.loadPage('/pages/mail/newMail/new-mail-list')
       }
     }
     events = {}
@@ -93,6 +96,7 @@
       this.bottomTabActive = 1
       this.getMlNotice()
     }
+
     /**
      * 下拉刷新函数
      */

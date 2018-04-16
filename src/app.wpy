@@ -51,15 +51,16 @@
 
     config = {
       pages: [
+        'pages/login/login',
         'pages/index',
         'pages/debug/debug',
-        'pages/login/login',
         'pages/main/main',
         'pages/fn/fn',
         'pages/address/main/address',
         'pages/address/selector/selector',
         'pages/me/me',
         'pages/mail/list/mail-list',
+        'pages/mail/newMail/new-mail-list',
         'pages/mail/read/read',
         'pages/mail/write/write',
         'pages/video/video',

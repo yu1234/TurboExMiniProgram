@@ -69,8 +69,6 @@
     <view slot="right">
       <icon class="iconfont icon-nav_btn_edit_default tb-nav-icon" @tap="writeMail"
             wx:if="{{!config.edit}}"></icon>
-      <icon class="iconfont icon-nav_btn_mail_menu tb-nav-icon" @tap="openPopup('swipePanelOpen')"
-            wx:if="{{!config.edit}}"></icon>
       <icon class="iconfont icon-nav_btn_cancel_check tb-nav-icon" wx:if="{{config.edit&&!isCheckAll}}"
             @tap="checkAllOrNot({{true}})"></icon>
       <icon class="iconfont icon-nav_btn_check_all tb-nav-icon" wx:if="{{config.edit&&isCheckAll}}"
@@ -82,67 +80,16 @@
                        text="{{item.text}}" titleAfter="{{item.date}}" un-read="{{item.unRead}}" top="{{item.top}}"
                        has-right="{{config.edit}}" attach="{{item.hasAttach}}" backlog="{{item.backlog}}"
                        importance="{{item.importance}}" star="{{item.star}}" wx:for="{{mails}}" wx:key="{{item.id}}"
-                       @tap.stop="readMail({{item}},{{index}})">
+                       @tap.stop="readNewMail({{item}},{{index}})">
       <tb-checkbox slot="right" value="{{item.id}}" name="selected" model="{{selected}}" color="#49A9F2"
                    bind:change="formChange"/>
     </tb-mail-list-item>
-    <tb-loading-more loading wx:if="{{!noMoreDate}}"></tb-loading-more>
   </view>
-  <!--侧边栏-->
-  <tb-popup position="right" open="{{popup.swipePanelOpen}}" name="swipePanelOpen" bind:show="popupChange"
-            bind:hide="popupChange">
-    <view class="swipe-panel-right">
-      <wxc-flex dir="top" main="center">
-        <block wx:for="{{swipePanelFolder.currentFolders}}" wx:key="{{item.id}}">
-          <view class="tb-flex-item item {{config.currentTab===item.id?'active':''}}">
-            <wxc-flex cross="center" bind:tap="changeTab({{item}})">
-              <view class="tb-flex-item" style="width: 20%">
-                <icon class="iconfont {{item.icon}} icon"></icon>
-              </view>
-              <view class="tb-flex-item" style="flex-grow: 4;width: {{item.hasChildNodes?'60%':'80%'}};">
-                <wxc-elip class="folder-name">{{item.name}}</wxc-elip>
-              </view>
-              <view class="tb-flex-item" style="width: 20%" wx:if="{{item.hasChildNodes}}"
-                    @tap.stop="intoFolder('swipePanelFolder',{{item.id}})">
-                <icon class="iconfont icon-next-m icon" style="font-size: 1rem;color: #cccccc"></icon>
-              </view>
-            </wxc-flex>
-          </view>
-        </block>
-      </wxc-flex>
-      <view class="panel-gray-strip"
-            wx:if="{{swipePanelFolder.currentFolderId&&swipePanelFolder.currentFolderId==='root'}}"></view>
-      <wxc-flex dir="top" main="center"
-                wx:if="{{swipePanelFolder.currentFolderId&&swipePanelFolder.currentFolderId==='root'}}">
-        <block wx:for="{{flagFolders}}" wx:key="{{item.id}}">
-          <view class="tb-flex-item item {{config.currentTab===item.id?'active':''}}">
-            <wxc-flex cross="center" bind:tap="changeTab({{item}})">
-              <view class="tb-flex-item" style="width: 20%">
-                <icon class="iconfont {{item.icon}} icon" style="color: {{item.color}};"></icon>
-              </view>
-              <view class="tb-flex-item" style="flex-grow: 4;width: 80%;">
-                <wxc-elip class="folder-name">{{item.name}}</wxc-elip>
-              </view>
-            </wxc-flex>
-          </view>
-        </block>
-      </wxc-flex>
-      <view class="tb-bar tb-bar-tab"
-            wx:if="{{swipePanelFolder.currentFolderId&&swipePanelFolder.currentFolderId!=='root'}}">
-        <wxc-flex dir="top" main="center" style="height: 2.5rem;">
-          <view style="font-size: .75rem;color: #49A9F2;padding-left: .5rem" @tap="backFolder('swipePanelFolder')">
-            <icon class="iconfont icon-move_mail_icon_back"></icon>
-            <view style="display: inline-block">上一级</view>
-          </view>
-        </wxc-flex>
-      </view>
-    </view>
-  </tb-popup>
   <!--底部工具栏-->
   <view class="tb-bar tb-bar-tab" wx:if="{{config.edit}}">
-    <view class="tb-tab-item" @tap="tabBarTap('delete')">
-      <icon class="iconfont icon-bottom_btn_delete tb-tab-icon"></icon>
-    </view>
+    <!--    <view class="tb-tab-item" @tap="tabBarTap('delete')">
+          <icon class="iconfont icon-bottom_btn_delete tb-tab-icon"></icon>
+        </view>-->
     <view class="tb-tab-item" @tap="openPopup('markingPopupOpen')">
       <icon class="iconfont icon-bottom_btn_marking tb-tab-icon"></icon>
     </view>
@@ -217,11 +164,9 @@
   import {parseDate, defaultErrors} from '../../../utils/utils'
   import BaseMixin from '../../../mixins/base'
   import PullDownRefreshMixin from '../../../mixins/pullDownRefresh'
-  import LoadMoreMixin from '../../../mixins/loadMore'
   import MailOperatorMixin from '../../../mixins/mailOperator'
   import FormMixin from '../../../mixins/form'
   import PermitMixin from '../../../mixins/permit'
-  import onfire from '../../../utils/onfire.min'
 
   const flags = [
     {id: 'star', name: '星标邮件', icon: 'icon-mailing_list_menu_ic1', color: 'rgb(255,162,0)', flag: '9'},
@@ -233,17 +178,16 @@
       flag: '11'
     },
     {id: 'backlog', name: '重要邮件', icon: 'icon-mailing_list_menu_ic2', color: 'rgb(255,59,48)', flag: '14'}]
-  export default class MailList extends wepy.page {
-    mixins = [BaseMixin, PullDownRefreshMixin, LoadMoreMixin, MailOperatorMixin, FormMixin, PermitMixin]
+  export default class NewMailList extends wepy.page {
+    mixins = [BaseMixin, PullDownRefreshMixin, MailOperatorMixin, FormMixin, PermitMixin]
     config = {
-      navigationBarTitleText: '收件箱',
+      navigationBarTitleText: '新邮件',
       usingComponents: {
         'wxc-flex': '../../../components/minui/wxc-flex/index',
         'wxc-elip': '../../../components/minui/wxc-elip/index',
         'tb-mail-list-item': '../../../components/tbui/tb-mail-list-item/index',
         'tb-nav': '../../../components/tbui/tb-nav/index',
         'tb-popup': '../../../components/tbui/tb-popup/index',
-        'tb-loading-more': '../../../components/tbui/tb-load-more/index',
         'tb-checkbox': '../../../components/tbui/tb-checkbox/index',
         'tb-permit': '../../../components/tbui/tb-permit/index'
       },
@@ -258,8 +202,6 @@
       mailMap: [],
       config: {
         edit: false,
-        currentTab: 'inbox',
-        fromindex: 0
       },
       flags: ['star', 'importance', 'backlog'],
       flagFolders: flags,
@@ -377,233 +319,141 @@
       },
       writeMail() {
         this.loadPage(`/pages/mail/write/write`)
-      }
-    }
-
-    filter() {
-      let self = this
-      return {
-        topMailFilter(mails) {
-          let n = []
-          self.each(mails, function (value, index) {
-            if (value && !value.top) {
-              n.push(value)
+      },
+      readNewMail(mail, index) {
+        if (mail && mail.id) {
+          wepy.showLoading({title: '加载中'})
+          let mailPermit = this.$wxpage.selectComponent('#mailPermit')
+          this.checkPreMit('mail.client.get', {mailid: mail.id}, mailPermit).then((r) => {
+            if (mail.unRead) {
+              this.markingMailByFlags([mail.id], ['1'], ['0']).then(() => {
+                if (this.isArrayNotNull(this.mails) && index > -1 && this.mails.length > index) {
+                  if (this.mails[index] && this.mails[index].id === mail.id) {
+                    this.mails[index].unRead = false
+                    this.$apply()
+                  }
+                }
+              })
             }
+            this.deleteNotice([mail.id]).then(() => {
+              wepy.hideLoading()
+              let password = r.password
+              this.loadPage(`/pages/mail/read/read?id=${mail.id}&password=${password}`)
+            })
+          }).catch((e) => {
+            wepy.hideLoading()
+            wepy.showToast({
+              title: e.message,
+              icon: 'none'
+            })
           })
-          return n
         }
       }
     }
 
     onShow() {
-
+      this.refresh()
     }
 
     onUnload(e) {
-      onfire.un('refresh')
+
     }
 
     onLoad() {
       let self = this
-      wepy.showLoading({title: '加载中...'})
       if (self.$parent.globalData.userInfo) {
         self.userHeaderPhoto = self.$parent.globalData.userInfo.headPhoto
         self.userAddress = self.$parent.globalData.userInfo.address
       }
-      self.config.currentTab = 'inbox'
-      self.refresh().then(function () {
-        wepy.hideLoading()
-      })
-      self.subscription()
-    }
-
-    subscription() {
-      let self = this
-      let refreshPage = onfire.on('refresh', () => {
-        self.refresh()
-      })
-      return [refreshPage]
+      self.refresh()
     }
 
     /**
      * 刷新
      */
     refresh() {
+      wepy.showLoading({title: '加载中...'})
       let self = this
-      return new Promise((resolve) => {
-        self.config.fromindex = 0
-        // 获取收件箱邮件
-        if (self.config.currentTab === 'inbox') {
-          self.getTopMails().then((topMail) => {
-            self.getMailsByFolder(self.config.currentTab, self.config.fromindex).then((inboxMail) => {
-              let newInboxMail = self.filter().topMailFilter(inboxMail)
-              self.refreshComplete(topMail, newInboxMail)
-              resolve()
-            }).catch((e) => {
-              wepy.showToast({title: e.message, icon: 'none'})
-            })
-          })
-        } else if (self.flags.includes(self.config.currentTab)) { // 标记邮件
-          let flag = null
-          self.each(self.flagFolders, function (v, i) {
-            if (v.id === self.config.currentTab) {
-              flag = v
-            }
-          })
-          if (flag) {
-            self.getMailsByFlag(flag.flag, self.config.fromindex).then((flagMail) => {
-              self.refreshComplete(flagMail)
-              resolve()
-            }).catch((e) => {
-              wepy.showToast({title: e.message, icon: 'none'})
-            })
-          }
-        } else {
-          self.getMailsByFolder(self.config.currentTab, self.config.fromindex).then((folderMail) => {
-            self.refreshComplete(folderMail)
-            resolve()
-          }).catch((e) => {
-            wepy.showToast({title: e.message, icon: 'none'})
-          })
-        }
+      return new Promise((resolve, reject) => {
+        // 获取消息提醒邮件
+        self.getNoticeMailList().then((mails) => {
+          self.refreshComplete(mails)
+          wepy.hideLoading()
+          resolve()
+        }).catch((e) => {
+          wepy.showToast({title: e.message, icon: 'none'})
+          wepy.hideLoading()
+          reject(e)
+        })
       })
     }
 
-    refreshComplete(mails1, mails2) {
+    refreshComplete(mails) {
       let self = this
-      self.mails = self.concat([], mails1, mails2)
-      if (self.mails.length < self.pageSize) {
-        self._loadMoreComplete(true)
-      } else {
-        self._loadMoreComplete(false)
-      }
+      self.mails = self.concat([], mails)
       self._refreshComplete()
       self.$apply()
     }
 
     /**
-     * 加载更多
+     * 获取邮件通知列表
      */
-
-    loadMore() {
-      let self = this
-      self.config.fromindex = self.config.fromindex + self.pageSize
-      if (self.config.currentTab === 'inbox') {
-        self.getMailsByFolder(self.config.currentTab, self.config.fromindex).then((inboxMail) => {
-          let newInboxMail = self.filter().topMailFilter(inboxMail)
-          self.loadMoreComplete(newInboxMail)
-        }).catch((e) => {
-          wepy.showToast({title: e.message, icon: 'none'})
-        })
-      } else if (self.flags.includes(self.config.currentTab)) { // 标记邮件
-        let flag = null
-        self.each(self.flagFolders, function (v, i) {
-          if (v.id === self.config.currentTab) {
-            flag = v
+    getNoticeMailList() {
+      return new Promise((resolve, reject) => {
+        twCallBeanPromise('notice.getlist', {}).then((ret) => {
+          let list = ret.beanparam.data.list
+          if (this.isArrayNotNull(list)) {
+            let call = []
+            let noticeIds = []
+            this.each(list, function (notice, i) {
+              if (notice && notice.rels && notice.rels.length > 0) {
+                let type = notice.rels[0].idtype
+                let mailId = notice.rels[0].reid
+                let noticeId = notice.noticeid
+                // 邮件通知
+                if (type === 'ml' && mailId && noticeId) {
+                  call.push(twCallBeanPromise('mail.client.get', {mailid: mailId}))
+                  noticeIds.push(noticeId)
+                }
+              }
+            })
+            if (call.length > 0) {
+              Promise.all(call).then((rets) => {
+                let mails = []
+                if (rets && rets.length > 0) {
+                  this.each(rets, function (r, i) {
+                    if (r.beanparam.retcode === 0) {
+                      let bean = r.beanparam
+                      if (bean.data && bean.data.mailid) {
+                        if (noticeIds.length > i) {
+                          bean.data.noticeId = noticeIds[i]
+                        }
+                        mails.push(bean.data)
+                      }
+                    }
+                  })
+                  if (mails.length > 0) {
+                    console.log(mails)
+                    this.formatMails(mails).then(r => {
+                      resolve(r)
+                    })
+                  } else {
+                    reject(defaultErrors.customError('列表为空'))
+                  }
+                } else {
+                  reject(defaultErrors.customError('列表为空'))
+                }
+              }).catch(function (reason) {
+                reject(defaultErrors.networkError)
+              })
+            } else {
+              reject(defaultErrors.customError('列表为空'))
+            }
+          } else {
+            reject(defaultErrors.customError('列表为空'))
           }
-        })
-        if (flag) {
-          self.getMailsByFlag(flag.flag, self.config.fromindex).then((flagMail) => {
-            self.loadMoreComplete(flagMail)
-          }).catch((e) => {
-            wepy.showToast({title: e.message, icon: 'none'})
-          })
-        }
-      } else {
-        self.getMailsByFolder(self.config.currentTab, self.config.fromindex).then((folderMail) => {
-          self.loadMoreComplete(folderMail)
-        }).catch((e) => {
-          wepy.showToast({title: e.message, icon: 'none'})
-        })
-      }
-    }
-
-    loadMoreComplete(mails) {
-      let self = this
-      self.mails = self.concat(self.mails || [], mails)
-      let noMoreDate = false
-      if (self.mails.length < self.config.fromindex) {
-        noMoreDate = true
-      }
-      self._loadMoreComplete(noMoreDate)
-      self.$apply()
-    }
-
-    /**
-     * 根据文件夹获取邮件
-     * @param folder 文件夹编码
-     * @param fromindex 定位号
-     */
-    getMailsByFolder(folder, fromindex) {
-      let self = this
-      return new Promise(function (resolve) {
-        let params = {
-          foldercode: folder || '',
-          pagesize: self.pageSize,
-          fromindex: fromindex || 0,
-          flag: -1 // 加载所有邮件
-        }
-        twCallBeanPromise('mail.client.getlist_foldercode', params).then(function (ret) {
-          let mails = (ret.beanparam.data && ret.beanparam.data.mails) || []
-          self.formatMails(mails).then((mls) => {
-            resolve(mls)
-          })
-        }).catch((e) => {
-          resolve(e)
-        })
-      })
-    }
-
-    /**
-     * 根据标示获取邮件
-     * @param folder 文件夹编码
-     * @param fromindex 定位号
-     */
-    getMailsByFlag(flag, fromindex, pagesize) {
-      let self = this
-      return new Promise(function (resolve) {
-        let params = {
-          flag: flag || -1,
-          fromindex: fromindex || 0,
-          pagesize: pagesize || self.pageSize
-        }
-        twCallBeanPromise('mail.client.getlist_flag', params).then(function (ret) {
-          let mails = (ret.beanparam.data && ret.beanparam.data.mails) || []
-          self.formatMails(mails).then((mls) => {
-            resolve(mls)
-          })
-        }).catch((e) => {
-          resolve(e)
-        })
-      })
-    }
-
-    /**
-     *根据flag获取邮件列表，获取全部
-     */
-    getMailListByFlagTotal(flag) {
-      let self = this
-      return new Promise(function (resolve) {
-        let params = {
-          flag: flag || -1
-        }
-        // 获取指定邮件总数量
-        twCallBeanPromise('mail.client.getcount_flag', params).then(function (ret) {
-          let count = ret.beanparam.data.count || 0
-          self.getMailsByFlag(flag, 0, count).then((data) => {
-            resolve(data)
-          })
-        })
-      })
-    }
-
-    /**
-     *获取置顶邮件
-     */
-    getTopMails() {
-      return new Promise((resolve) => {
-        this.getMailListByFlagTotal(10).then((topMail) => {
-          resolve(topMail)
+        }).catch(function (e) {
+          reject(defaultErrors.networkError)
         })
       })
     }
@@ -655,7 +505,7 @@
               let ml = {
                 id: mail.mailid,
                 address: from.account || '',
-                title: from.name || (from.account || '暂无'),
+                title: from.name || (from.account || '暂无主题'),
                 subject: mail.subject,
                 fromId: mail.fromid,
                 text: mail.txtcontent || '',
@@ -665,7 +515,8 @@
                 star: star,
                 importance: importance,
                 backlog: backlog,
-                top: top
+                top: top,
+                noticeId: mail.noticeId
               }
               mls.push(ml)
               this.mailMap[ml.id] = ml
@@ -691,11 +542,28 @@
     }
 
     /**
-     * 删除邮件
-     * @param ids
+     * 删除通知
      */
-    deleteMailByIds(ids) {
-
+    deleteNotice(mailIds) {
+      let noticeIds = []
+      if (this.isArrayNotNull(mailIds)) {
+        this.each(mailIds, (mailId, i) => {
+          if (this.mailMap[mailId] && this.mailMap[mailId].noticeId) {
+            noticeIds.push(this.mailMap[mailId].noticeId)
+          }
+        })
+      }
+      return new Promise(function (resolve) {
+        if (noticeIds.length > 0) {
+          twCallBeanPromise('notice.del', {noticeids: noticeIds}).then(function () {
+            resolve()
+          }).catch(function () {
+            resolve()
+          })
+        } else {
+          resolve()
+        }
+      })
     }
   }
 </script>

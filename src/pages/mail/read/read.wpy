@@ -30,6 +30,23 @@
     }
   }
 
+  .markingPopupOpen {
+    width: 14rem;
+    min-height: 20rem;
+    overflow: auto;
+    .item {
+      height: 2rem;
+      padding: .2rem;
+      .icon {
+        font-size: 1rem;
+        display: flex;
+      }
+      .name {
+        font-size: .75rem;
+      }
+    }
+  }
+
 </style>
 <template>
   <tb-nav title="{{mail.subject}}"></tb-nav>
@@ -151,17 +168,90 @@
       </wxc-flex>
     </scroll-view>
   </tb-popup>
+  <!--底部工具栏-->
+  <view class="tb-bar tb-bar-tab">
+    <view class="tb-tab-item" @tap="tabBarTap('delete')">
+      <icon class="iconfont icon-bottom_btn_delete tb-tab-icon"></icon>
+    </view>
+    <view class="tb-tab-item" @tap="openPopup('markingPopupOpen')">
+      <icon class="iconfont icon-bottom_btn_marking tb-tab-icon"></icon>
+    </view>
+    <view class="tb-tab-item" @tap="openPopup('movePopupOpen')">
+      <icon class="iconfont icon-bottom_btn_move tb-tab-icon"></icon>
+    </view>
+    <view class="tb-tab-item" @tap="tabBarTap('forward')">
+      <icon class="iconfont icon-bottom_btn_forwardin tb-tab-icon"></icon>
+    </view>
+    <view class="tb-tab-item" @tap="tabBarTap('reply')">
+      <icon class="iconfont icon-bottom_btn_revert tb-tab-icon"></icon>
+    </view>
+  </view>
+  <!--标记弹出层-->
+  <tb-popup open="{{popup.markingPopupOpen}}" name="markingPopupOpen" bind:show="popupChange" bind:hide="popupChange">
+    <view class="markingPopupOpen">
+      <wxc-flex dir="top" main="center">
+        <block wx:for="{{markingItems}}" wx:key="{{item.id}}">
+          <view class="tb-flex-item item">
+            <wxc-flex cross="center" bind:tap="onMarkingMail({{item}})">
+              <view class="tb-flex-item" style="width: 20%">
+                <icon class="iconfont {{item.icon}} icon"></icon>
+              </view>
+              <view class="tb-flex-item" style="flex-grow: 4;width: 80%">
+                <wxc-elip class="name">{{item.name}}</wxc-elip>
+              </view>
+            </wxc-flex>
+          </view>
+        </block>
+      </wxc-flex>
+    </view>
+  </tb-popup>
+  <!--移动弹出层-->
+  <tb-popup open="{{popup.movePopupOpen}}" name="movePopupOpen" bind:show="popupChange"
+            bind:hide="popupChange">
+    <view class="markingPopupOpen">
+      <wxc-flex dir="top" main="center"
+                class="{{movePopupFolder.currentFolderId&&movePopupFolder.currentFolderId!=='root'?'tb-has-bottom-tab':''}}">
+        <block wx:for="{{movePopupFolder.currentFolders}}" wx:key="{{item.id}}">
+          <view class="tb-flex-item item">
+            <wxc-flex cross="center" bind:tap="moveMailTap({{[mail.id]}},{{item}})">
+              <view class="tb-flex-item" style="width: 20%">
+                <icon class="iconfont {{item.icon}} icon"></icon>
+              </view>
+              <view class="tb-flex-item" style="flex-grow: 4;width: {{item.hasChildNodes?'60%':'80%'}};">
+                <wxc-elip class="name">{{item.name}}</wxc-elip>
+              </view>
+              <view class="tb-flex-item" style="width: 20%" wx:if="{{item.hasChildNodes}}"
+                    @tap.stop="intoFolder('movePopupFolder',{{item.id}})">
+                <icon class="iconfont icon-next-m icon" style="font-size: 1rem;color: #cccccc"></icon>
+              </view>
+            </wxc-flex>
+          </view>
+          <view class="tb-flex-item  tb-bar tb-bar-tab"
+                wx:if="{{movePopupFolder.currentFolderId&&movePopupFolder.currentFolderId!=='root'}}">
+            <wxc-flex dir="top" main="center" style="height: 2.5rem;">
+              <view style="font-size: .75rem;color: #49A9F2;padding-left: .5rem" @tap="backFolder('movePopupFolder')">
+                <icon class="iconfont icon-move_mail_icon_back"></icon>
+                <view style="display: inline-block">上一级</view>
+              </view>
+            </wxc-flex>
+          </view>
+        </block>
+      </wxc-flex>
+    </view>
+  </tb-popup>
 </template>
 
 <script>
   import wepy from 'wepy'
   import BaseMixin from '../../../mixins/base'
   import CommonMixin from '../../../mixins/common'
+  import MailOperatorMixin from '../../../mixins/mailOperator'
   import PopupMixin from '../../../mixins/popup'
   import {downloadFile} from '../../../utils/utils'
+  import onfire from '../../../utils/onfire.min'
 
   export default class Read extends wepy.page {
-    mixins = [BaseMixin, CommonMixin, PopupMixin]
+    mixins = [BaseMixin, CommonMixin, PopupMixin, MailOperatorMixin]
     config = {
       navigationBarTitleText: '',
       usingComponents: {
@@ -179,7 +269,10 @@
       mail: {},
       popup: {
         detailPopupOpen: false,
-        attachPopupOpen: false
+        attachPopupOpen: false,
+        markingPopupOpen: false,
+        movePopupOpen: false
+
       }
     }
     computed = {}
@@ -247,6 +340,51 @@
             }
           })
         }
+      },
+      /**
+       * 下方工具栏点击事件
+       * @param type
+       */
+      tabBarTap(type) {
+        if (type === 'forward') {
+          let data = {
+            id: this.mail.id,
+            password: this.mail.password
+          }
+          this.loadPage(`/pages/mail/write/write?type=mailForward&data=${JSON.stringify(data)}`)
+        } else if (type === 'reply') {
+          let data = {
+            id: this.mail.id,
+            password: this.mail.password
+          }
+          this.loadPage(`/pages/mail/write/write?type=mailReply&data=${JSON.stringify(data)}`)
+        } else if (type === 'delete') {
+          this.logicDeleteMail([this.mail.id]).then(() => {
+            this.backPage()
+            onfire.fire('refresh')
+          })
+        }
+      },
+      /**
+       * 邮件标记
+       * @param item
+       */
+      onMarkingMail(item) {
+        this.markingMail([this.mail.id], item).then(() => {
+          this.closePopup('markingPopupOpen')
+          onfire.fire('refresh')
+        })
+      },
+      /**
+       * 移动邮件
+       * @param ids
+       * @param item
+       */
+      moveMailTap(ids, item) {
+        this.moveMailTap(ids, item).then(() => {
+          this.closePopup('movePopupOpen')
+          onfire.fire('refresh')
+        })
       }
     }
 
