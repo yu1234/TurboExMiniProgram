@@ -89,10 +89,8 @@ let twmodule = {
         },
         fail: function (errMsg) {
           if (errMsg) {
-            if (errMsg.errMsg !== 'request:fail timeout') {
-              let error = new Error(errMsg.errMsg)
-              reject(error)
-            }
+            let error = new Error(errMsg.errMsg)
+            reject(error)
           } else {
             reject(defaultErrors.networkError)
           }

@@ -50,7 +50,7 @@
 </style>
 <template>
   <tb-nav title="{{mail.subject}}"></tb-nav>
-  <view class="tb-content has-sub-header">
+  <view class="tb-content has-sub-header tb-has-bottom-tab">
     <view>
       <tb-list-item avatar="{{mail.headerPhoto}}" sub-title="{{mail.fullTitle}}" bind:error="error">
         <view slot="text">

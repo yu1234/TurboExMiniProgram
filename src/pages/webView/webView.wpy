@@ -37,9 +37,10 @@
 
     onLoad(options) {
       if (options && options.src) {
+        console.log(options.src)
         let src = decodeURIComponent(options.src)
         let reg = new RegExp(/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+(:[0-9]+)?|(?:ww‌​w.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~ %\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?‌​(?:[\w]*))?)/)
-        let newSrc = src.replace(reg, service.host)
+        let newSrc = service.host + src.replace(reg, service.host)
         wepy.showLoading({
           title: '网页加载中...'
         })

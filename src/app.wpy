@@ -32,7 +32,6 @@
         },
         // 请求失败后的回调函数
         fail(p) {
-          console.log(p)
           if (p.errMsg) {
             if (p.errMsg === 'request:fail timeout') {
               wepy.showToast({
@@ -108,7 +107,7 @@
       },
       debug: false,
       networkTimeout: {
-        request: 12000
+        request: 20000
       }
     }
 
